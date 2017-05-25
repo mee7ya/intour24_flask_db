@@ -17,6 +17,9 @@ class Tour(BaseModel):
     price = CharField()
     time = CharField()
 
+    def __repr__(self):
+        return str(self.title) + " " + str(self.price) + " " + str(self.date) + " " + str(self.time)
+
 
 def migrate():
     create_model_tables([Tour], fail_silently=True)

@@ -2,7 +2,8 @@ import datetime
 from bs4 import BeautifulSoup
 import urllib.request
 import ssl
-import db_model as db
+import parsing.db_model as db
+import re
 
 
 # from postgre_connect import DBConnect as db
@@ -24,11 +25,16 @@ def get_html(url):
     return response.read()
 
 
-def parse(html):
+def _parse(html):
     soup = BeautifulSoup(html, 'html.parser')
+    for old_price in soup.find_all('span', class_="old_price"):
+        old_price.extract()
+
     tours_soup = soup.find_all(lambda tag: tag.name == 'div' and tag.get('class') == ['tr'])
+    tours = []
     for tour_soup in tours_soup:
-        parse_tour(tour_soup)
+        tours.append(parse_tour(tour_soup))
+    return tours
 
 
 def parse_tour(tour_soup):
@@ -37,8 +43,7 @@ def parse_tour(tour_soup):
     tour.date = parse_date(tour_soup)
     tour.price = parse_price(tour_soup)
     tour.time = parse_time(tour_soup)
-    tour.save()
-    # tour.save(database)
+    return tour
 
 
 def parse_title(tour):
@@ -49,9 +54,9 @@ def parse_title(tour):
 
 
 def parse_price(tour):
-    return tour.find('div', class_='bold-col td') \
-        .find('span', class_='border-right') \
-        .text
+    return re.search('[\d]+', tour.find('div', class_='bold-col td') \
+                     .find('span', class_='border-right') \
+                     .text).group(0)
 
 
 def parse_date(tour):
@@ -66,10 +71,14 @@ def parse_time(tour):
         .text
 
 
+def parse():
+    return _parse(get_html(HOME_URL))
+
+
 if __name__ == '__main__':
     db.migrate()
     # database = DBConnect('dbafp', 'user', 'pass')
 
-    parse(get_html(HOME_URL))
+    parse()
 
     # database.close()

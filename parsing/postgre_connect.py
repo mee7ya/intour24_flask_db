@@ -1,4 +1,4 @@
-import psycopg2
+import psycopg2 as p
 
 
 class Tour:
@@ -15,15 +15,15 @@ class Tour:
 
 
 class DBConnect:
-    def __init__(self, db_name, user_name, password, connect=True):
-        self.PARAMS = "dbname='{}' user='{}' password='{}'".format(db_name, user_name, password)
+    def __init__(self, db_name, user_name, password, connect=True, host=None):
+        self.PARAMS = "dbname='{}' user='{}' password='{}' host={}".format(db_name, user_name, password, host)
         self.conn = None
         self.cur = None
         if connect:
             self.connect()
 
     def connect(self):
-        self.conn = psycopg2.connect(self.PARAMS)
+        self.conn = p.connect(self.PARAMS)
         self.cur = self.conn.cursor()
 
     def close(self):
