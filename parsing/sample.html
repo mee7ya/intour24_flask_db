@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="ru-RU">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-param" content="_csrf">
+    <meta name="csrf-token" content="ZDFGb3NsNnoCcAtfKVgbSCYHJQIJXXdDBVQcFQMAYSBdfjIbBiBGKA==">
+    <title>Календарь экскурсий</title>
+    <link href="/css/daterangepicker.css" rel="stylesheet">
+    <link href="/css/sweetalert.css" rel="stylesheet">
+    <link href="/css/timeTo.css" rel="stylesheet">
+    <link href="/web/fancybox/jquery.fancybox.css" rel="stylesheet">
+    <link href="/web/slick/slick.css" rel="stylesheet">
+    <link href="/css/site.css" rel="stylesheet">
+    <link href="/css/adaptive.css" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,700,600&subset=latin,cyrillic'
+          rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=PT+Sans:700&subset=latin,cyrillic' rel='stylesheet'
+          type='text/css'>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r;
+            i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date();
+            a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+        ga('create', 'UA-78899449-2', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+
+</head>
+
+<body class="site-body">
+
+
+<header class="header">
+    <div class="wrapper clearfix col-10-row">
+        <div class="logo col-2">
+            <a href="/"><img src="/web/img/logo.png"/></a>
+        </div>
+        <div class="social col-2">
+            <a href="https://vk.com/tur_kzn" target="_blank"><img src="/web/img/social/vk.png"/></a>
+            <a href="https://www.instagram.com/tur_kzn/" target="_blank"><img src="/web/img/social/in.png"/></a>
+        </div>
+
+        <div class="menu-link-320"><a href="#">Меню</a></div>
+
+        <div class="callback col-2">
+            <a href="#" class="border-link link24" onclick="yaCounter38773670.reachGoal('fast'); return true;">Быстрая
+                связь</a>
+        </div>
+        <div class="phone col-3">
+            <a href="tel:88007001591"><b>8-800-700-15-91</b></a>
+            <span class="caption">Звонок по России бесплатный</span>
+        </div>
+        <div class="singin col-1">
+            <a href="/login" class="singin-link">Войти</a>
+        </div>
+    </div>
+    <div class="clearfix wrapper header-menu">
+
+
+        <ul class="line-menu">
+            <li><a href="/">Главная</a></li>
+            <li><a href="/info/individual-excursion">Индивидуальные экскурсии (VIP)</a></li>
+            <li><a href="/info/about-us">О нас</a></li>
+            <li><a href="/info/for-tourist">Туристам</a></li>
+            <li><a href="/info/agency">Агентствам</a></li>
+            <li><a href="/info/info">Офисы продаж</a></li>
+            <li><a href="/info/contacts">Контакты</a></li>
+            <li class="singin-link"><a href="/login">Войти</a></li>
+        </ul>
+    </div>
+
+</header>
+
+
+<section class="content-section content-main">
+    <div class="wrapper clearfix">
+
+        <div class="">
+            <div class="excursions-default-index">
+                <h1 class="title-h1">Календарь экскурсий</h1>
+
+                <div class="calendar-box">
+                    <form class="form-default">
+                        <div class="col-2-row clearfix">
+                            <div class="col-1">
+                                <div class="col-title">Выберите дату экскурсии</div>
+                                <div class="row">
+                                    <div id="date-range-container"></div>
+                                    <input id="datePicker" name="daterange" value=""/>
+
+                                </div>
+                            </div>
+                            <div class="col-1">
+                                <div class="col-title m-b-60">Экскурсии по праздникам</div>
+                                <ul class="holiday-list">
+                                    <li>
+                                        <a href="/excursions?daterange=2017-05-01+to+2017-05-09">
+                                            <span class="date">01.05-09.05</span>
+                                            <span class="title"><i>Майские праздники</i></span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/excursions?daterange=2017-06-11+to+2017-06-13">
+                                            <span class="date">11.06-13.06</span>
+                                            <span class="title"><i>Июньские праздники</i></span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/excursions?daterange=2017-11-04+to+2017-11-06">
+                                            <span class="date">04.11-06.11</span>
+                                            <span class="title"><i>Ноябрьские праздники</i></span>
+                                        </a>
+                                    </li>
+
+                                </ul>
+
+
+                            </div>
+                        </div>
+                        <div class="row-submit">
+                            <input type="submit" class="green-button arrow-down-w"
+                                   value="Показать экскурсии по выбранной дате"/>
+                        </div>
+
+                    </form>
+
+
+                    <input type="hidden" id="tempDateRange" value=""/>
+                </div>
+
+                <h2>Ближайшие экскурсии</h2>
+                <div class="excursions-box">
+                    <div class="table">
+                        <div class="tr tr-head">
+                            <div class="th info-col"></div>
+                            <div class="th">Цена на чел.<br/>в рублях</div>
+                            <div class="th">Время<br/> проведения</div>
+                            <div class="th"></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/ovejannaja-legendami-zemlja">Экскурсия в Раифу + Храм всех
+                                    религий</a></div>
+                                <div class="short_description"><p>Экскурсия «Овеянная легендами земля» в Раифский
+                                    Богородицкий мужской монастырь, с осмотром Храма Всех Религий.<br></p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">750</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:00-14:00 </span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/ovejannaja-legendami-zemlja"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja">Экскурсия
+                                    по Казани + Казанский Кремль</a></div>
+                                <div class="short_description"><p><strong></strong>Данная экскурсия даст вам наиболее
+                                    полное представление о Казани и ее достопримечательностях.</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">750</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:30-14:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja"
+                                    class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja">Экскурсия
+                                    по Казани + Казанский Кремль</a></div>
+                                <div class="short_description"><p><strong></strong>Данная экскурсия даст вам наиболее
+                                    полное представление о Казани и ее достопримечательностях.</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">750</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">14:00-18:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja"
+                                    class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/nochnaya-kazan-ekskursii">Экскурсия ночная Казань - "Огни
+                                    Казани"</a></div>
+                                <div class="short_description"><p>Перед вами предстанет ночная Казань, затихшая и
+                                    умиротворенная, вся в огнях подсветки исторических зданий. </p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">700</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">20:30-22:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/nochnaya-kazan-ekskursii"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/Slijanie-rek-v-slijanii-kul%27tur">Экскурсия "Слияние рек в
+                                    слиянии культур"</a></div>
+                                <div class="short_description"><p>Поездка по древнему Ногайскому тракту, окунет вас во
+                                    всю прелесть природных красот и традиций исторических поселений.</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">2200</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:00-16:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/Slijanie-rek-v-slijanii-kul'tur"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/sviazhsk">Экскурсия в Свияжск + Храм всех религий</a></div>
+                                <div class="short_description"><p><strong>Свияжск </strong>– это историко-культурная
+                                    жемчужина Республики Татарстан.</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">1000</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:30-15:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/sviazhsk"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/severnaja-mekka">Экскурсия в Болгар (Северная Мекка) +
+                                    обед</a></div>
+                                <div class="short_description"><p>Болгарское городище - столица одного из ранних
+                                    государственных объединений Восточной Европы</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">2000</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">09:00-20:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/severnaja-mekka"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/Belokamennaja-krepost-kazanskiy-kreml">Экскурсия в Кремль
+                                    (Казанский)</a></div>
+                                <div class="short_description"><p>Посещение Казанского Кремля, главной
+                                    достопримечательности города, памятника всемирного наследия ЮНЕСКО</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">500</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">13:00-14:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Belokamennaja-krepost-kazanskiy-kreml" class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/Belokamennaja-krepost-kazanskiy-kreml">Экскурсия в Кремль
+                                    (Казанский)</a></div>
+                                <div class="short_description"><p>Посещение Казанского Кремля, главной
+                                    достопримечательности города, памятника всемирного наследия ЮНЕСКО</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">500</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">16:30-18:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Belokamennaja-krepost-kazanskiy-kreml" class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/obzornaya-excursia">Экскурсия по Казани (обзорная)</a></div>
+                                <div class="short_description"><p>Данная экскурсия даст вам наиболее полное
+                                    представление о Казани и ее достопримечательностях. </p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">650</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:30-13:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/obzornaya-excursia"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/obzornaya-excursia">Экскурсия по Казани (обзорная)</a></div>
+                                <div class="short_description"><p>Данная экскурсия даст вам наиболее полное
+                                    представление о Казани и ее достопримечательностях. </p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">650</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">14:00-16:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/obzornaya-excursia"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">24.05</span><a
+                                        href="/excursions/raifa-religia-sviazsk">Экскурсия в Раифу + Храм Всех Религий +
+                                    Свияжск</a></div>
+                                <div class="short_description"><p>Загородная экскурсия включает осмотр по трассе
+                                    Храма-памятника воинам, Остров-град Свияжск на «Круглой горе», Раифский Богородицкий
+                                    монастырь</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">1500</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:00-18:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/raifa-religia-sviazsk"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/ovejannaja-legendami-zemlja">Экскурсия в Раифу + Храм всех
+                                    религий</a></div>
+                                <div class="short_description"><p>Экскурсия «Овеянная легендами земля» в Раифский
+                                    Богородицкий мужской монастырь, с осмотром Храма Всех Религий.<br></p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">750</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:00-14:00 </span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/ovejannaja-legendami-zemlja"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja">Экскурсия
+                                    по Казани + Казанский Кремль</a></div>
+                                <div class="short_description"><p><strong></strong>Данная экскурсия даст вам наиболее
+                                    полное представление о Казани и ее достопримечательностях.</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">750</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">14:00-18:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja"
+                                    class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja">Экскурсия
+                                    по Казани + Казанский Кремль</a></div>
+                                <div class="short_description"><p><strong></strong>Данная экскурсия даст вам наиболее
+                                    полное представление о Казани и ее достопримечательностях.</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">750</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:30-14:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja"
+                                    class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/nochnaya-kazan-ekskursii">Экскурсия ночная Казань - "Огни
+                                    Казани"</a></div>
+                                <div class="short_description"><p>Перед вами предстанет ночная Казань, затихшая и
+                                    умиротворенная, вся в огнях подсветки исторических зданий. </p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">700</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">20:30-22:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/nochnaya-kazan-ekskursii"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/Zdes-nauki-zdes-iskusstva-prosveshhenija-ochag">Пешеходная
+                                    экскурсия «Здесь науки, здесь искусства...»+ особняк Зинаиды Ушковой </a></div>
+                                <div class="short_description"><p>Мы осмотрим весь комплекс зданий университетского
+                                    городка: главное здание, обсерваторию, анатомический театр, научную
+                                    библиотеку...</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">750</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">11:00-13:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Zdes-nauki-zdes-iskusstva-prosveshhenija-ochag"
+                                    class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/sviazhsk">Экскурсия в Свияжск + Храм всех религий</a></div>
+                                <div class="short_description"><p><strong>Свияжск </strong>– это историко-культурная
+                                    жемчужина Республики Татарстан.</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">1000</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:30-15:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/sviazhsk"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/severnaja-mekka">Экскурсия в Болгар (Северная Мекка) +
+                                    обед</a></div>
+                                <div class="short_description"><p>Болгарское городище - столица одного из ранних
+                                    государственных объединений Восточной Европы</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">2000</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">09:00-20:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/severnaja-mekka"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/Belokamennaja-krepost-kazanskiy-kreml">Экскурсия в Кремль
+                                    (Казанский)</a></div>
+                                <div class="short_description"><p>Посещение Казанского Кремля, главной
+                                    достопримечательности города, памятника всемирного наследия ЮНЕСКО</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">500</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">16:30-18:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Belokamennaja-krepost-kazanskiy-kreml" class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/Belokamennaja-krepost-kazanskiy-kreml">Экскурсия в Кремль
+                                    (Казанский)</a></div>
+                                <div class="short_description"><p>Посещение Казанского Кремля, главной
+                                    достопримечательности города, памятника всемирного наследия ЮНЕСКО</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">500</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">13:00-14:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Belokamennaja-krepost-kazanskiy-kreml" class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/obzornaya-excursia">Экскурсия по Казани (обзорная)</a></div>
+                                <div class="short_description"><p>Данная экскурсия даст вам наиболее полное
+                                    представление о Казани и ее достопримечательностях. </p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">650</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">14:00-16:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/obzornaya-excursia"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/obzornaya-excursia">Экскурсия по Казани (обзорная)</a></div>
+                                <div class="short_description"><p>Данная экскурсия даст вам наиболее полное
+                                    представление о Казани и ее достопримечательностях. </p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">650</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:30-13:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/obzornaya-excursia"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">25.05</span><a
+                                        href="/excursions/raifa-religia-sviazsk">Экскурсия в Раифу + Храм Всех Религий +
+                                    Свияжск</a></div>
+                                <div class="short_description"><p>Загородная экскурсия включает осмотр по трассе
+                                    Храма-памятника воинам, Остров-град Свияжск на «Круглой горе», Раифский Богородицкий
+                                    монастырь</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">1500</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:00-18:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/raifa-religia-sviazsk"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/joshkar-ola-udivitel%27naja">Экскурсия в Йошкар-Олу + обед</a>
+                                </div>
+                                <div class="short_description">
+                                    <ul>
+                                        <li> Поэтому мы едем в Йошкар-Олу прежде всего не за историей пыльных веков, а
+                                            за тем, чтобы увидеть современную жизнь.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">2450</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">09:00-20:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/joshkar-ola-udivitel'naja"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/ovejannaja-legendami-zemlja">Экскурсия в Раифу + Храм всех
+                                    религий</a></div>
+                                <div class="short_description"><p>Экскурсия «Овеянная легендами земля» в Раифский
+                                    Богородицкий мужской монастырь, с осмотром Храма Всех Религий.<br></p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">750</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:00-14:00 </span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/ovejannaja-legendami-zemlja"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja">Экскурсия
+                                    по Казани + Казанский Кремль</a></div>
+                                <div class="short_description"><p><strong></strong>Данная экскурсия даст вам наиболее
+                                    полное представление о Казани и ее достопримечательностях.</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">750</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:30-14:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja"
+                                    class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja">Экскурсия
+                                    по Казани + Казанский Кремль</a></div>
+                                <div class="short_description"><p><strong></strong>Данная экскурсия даст вам наиболее
+                                    полное представление о Казани и ее достопримечательностях.</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">750</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">14:00-18:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Obzornaja-jekskursija-po-Kazani-s-poseshheniem-Kazanskogo-Kremlja"
+                                    class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/nochnaya-kazan-ekskursii">Экскурсия ночная Казань - "Огни
+                                    Казани"</a></div>
+                                <div class="short_description"><p>Перед вами предстанет ночная Казань, затихшая и
+                                    умиротворенная, вся в огнях подсветки исторических зданий. </p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">700</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">20:30-22:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/nochnaya-kazan-ekskursii"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/sviazhsk">Экскурсия в Свияжск + Храм всех религий</a></div>
+                                <div class="short_description"><p><strong>Свияжск </strong>– это историко-культурная
+                                    жемчужина Республики Татарстан.</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">1000</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:30-15:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/sviazhsk"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/severnaja-mekka">Экскурсия в Болгар (Северная Мекка) +
+                                    обед</a></div>
+                                <div class="short_description"><p>Болгарское городище - столица одного из ранних
+                                    государственных объединений Восточной Европы</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">2000</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">09:00-20:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/severnaja-mekka"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/Belokamennaja-krepost-kazanskiy-kreml">Экскурсия в Кремль
+                                    (Казанский)</a></div>
+                                <div class="short_description"><p>Посещение Казанского Кремля, главной
+                                    достопримечательности города, памятника всемирного наследия ЮНЕСКО</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">500</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">13:00-14:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Belokamennaja-krepost-kazanskiy-kreml" class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/Belokamennaja-krepost-kazanskiy-kreml">Экскурсия в Кремль
+                                    (Казанский)</a></div>
+                                <div class="short_description"><p>Посещение Казанского Кремля, главной
+                                    достопримечательности города, памятника всемирного наследия ЮНЕСКО</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">500</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">16:30-18:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a
+                                    href="/excursions/Belokamennaja-krepost-kazanskiy-kreml" class="orange-button-small"
+                                    onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a></div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/obzornaya-excursia">Экскурсия по Казани (обзорная)</a></div>
+                                <div class="short_description"><p>Данная экскурсия даст вам наиболее полное
+                                    представление о Казани и ее достопримечательностях. </p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">650</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:30-13:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/obzornaya-excursia"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/obzornaya-excursia">Экскурсия по Казани (обзорная)</a></div>
+                                <div class="short_description"><p>Данная экскурсия даст вам наиболее полное
+                                    представление о Казани и ее достопримечательностях. </p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">650</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">14:00-16:30</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/obzornaya-excursia"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                        <div class="tr">
+                            <div class="info-col td">
+                                <div class="title clearfix"><span class="date">26.05</span><a
+                                        href="/excursions/raifa-religia-sviazsk">Экскурсия в Раифу + Храм Всех Религий +
+                                    Свияжск</a></div>
+                                <div class="short_description"><p>Загородная экскурсия включает осмотр по трассе
+                                    Храма-памятника воинам, Остров-град Свияжск на «Круглой горе», Раифский Богородицкий
+                                    монастырь</p></div>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Цена на чел. в рублях</span>
+                                <span class="border-right">1500</span>
+                            </div>
+                            <div class="bold-col td">
+                                <span class="bold-col-caption">Времяпроведения</span>
+                                <span class="border-right">10:00-18:00</span>
+                            </div>
+                            <div class="bold-col td button-col"><a href="/excursions/raifa-religia-sviazsk"
+                                                                   class="orange-button-small"
+                                                                   onclick="yaCounter38773670.reachGoal('order-click'); return true;">Заказ</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="buttons_block">
+            <a href="/excursions" class="orange-button calendar-icon">Календарь экскурсий</a>
+            <a href="/check" class="green-button refresh-icon top-button">Проверить статус заказа</a>
+        </div>
+
+    </div>
+</section>
+
+
+<footer class="footer-section">
+    <div class="wrapper clearfix col-10-row">
+        <div class="logo col-2">
+            <img src="/web/img/logo-footer.png"/>
+        </div>
+        <div class="social col-2">
+            <a href="https://vk.com/tur_kzn" target="_blank"><img src="/web/img/social/vk.png"/></a>
+            <a href="https://www.instagram.com/tur_kzn/" target="_blank"><img src="/web/img/social/in.png"/></a>
+        </div>
+        <div class="menu col-4 clearfix">
+
+
+            <ul class="line-menu">
+                <li><a href="/">Главная</a></li>
+                <li><a href="/info/individual-excursion">Индивидуальные экскурсии (VIP)</a></li>
+                <li><a href="/info/about-us">О нас</a></li>
+                <li><a href="/info/for-tourist">Туристам</a></li>
+                <li><a href="/info/agency">Агентствам</a></li>
+                <li><a href="/info/info">Офисы продаж</a></li>
+                <li><a href="/info/contacts">Контакты</a></li>
+                <li class="singin-link"><a href="/login">Войти</a></li>
+            </ul>
+        </div>
+
+        <div class="contacts col-2">
+            <div class="phone">
+                <a href="tel:88007001591">8-800-700-15-91</a>
+            </div>
+            <div class="callback">
+                <a href="#" class="border-link link24" onclick="yaCounter38773670.reachGoal('fast'); return true;">Быстрая
+                    связь</a>
+            </div>
+
+        </div>
+
+        <div class="clearfix"></div>
+        <div class="flinks">
+            Экскурсия в Булгар <a href="/info/ekskursija-v-bulgar-na-teplohode">на теплоходе</a> или <a
+                href="/info/ekskursija-v-bulgary-na-avtobuse">на автобусе</a> |
+            Экскурсия в Свияжск <a href="/info/ekskursii-v-svijazhsk-na-teplohode">на теплоходе</a> или <a
+                href="/info/ekskursii-v-svijazhsk-na-avtobuse">на автобусе</a> |
+            Экскурсия по Казани <a href="/info/dvuhjetazhnyj-avtobus">на двухэтажном автобусе</a> или <a
+                href="/info/na-teplohode">на теплоходе</a> |
+            <a href="/info/dlya-detei">Экскурсии для детей в Казани</a> |
+            <a href="/info/prices">Цены на экскурсии в Казани</a> |
+            <a href="/info/articles">Интересное</a>
+        </div>
+        <div class="flinks">
+            Экскурсии:
+            <a href="/excursions/chistopol-laishevo">Лаишево + Чистополь</a> |
+            <a href="/excursions/arbat-vasiliev">ул. Баумана (Казанский Арбат) + музей-галерея Константина Васильева</a>
+        </div>
+    </div>
+    <div class="wrapper clearfix footer-second">
+        <div class="left">Экскурсионный<br/>Сервис Казань © 2017 <p>Адрес: г. Казань, ул. Минская, 12</p>
+            <p>E-mail: <a href="mailto:bron@to-kazan.ru">bron@to-kazan.ru</a></p>
+            <p>Телефон: +7 (843) 260-03-30, 8-800-700-15-91</p>
+        </div>
+        <div class="right copyr">
+            <a href="http://rdbx.ru" target="_blank">Сделано в<br/>веб-студии</a>
+        </div>
+    </div>
+</footer>
+
+
+<script src="/assets/6b0b394a/jquery.js"></script>
+<script src="/assets/51c73c27/yii.js"></script>
+<script src="/web/ui/jquery-ui.min.js"></script>
+<script src="/web/js/moment.min.js"></script>
+<script src="/web/js/jquery.daterangepicker.js"></script>
+<script src="/web/js/jquery.searcher.js"></script>
+<script src="/web/js/jquery.highlight-5.closure.js"></script>
+<script src="/web/js/sweetalert.min.js"></script>
+<script src="/web/js/counterchars.min.js"></script>
+<script src="/web/js/jquery.tablesorter.js"></script>
+<script src="/web/js/jquery.maskedinput.min.js"></script>
+<script src="/web/fancybox/jquery.fancybox.js"></script>
+<script src="/web/slick/slick.min.js"></script>
+<script src="/web/js/jquery.time-to.min.js"></script>
+<script src="/web/js/simple.tabs.js"></script>
+<script src="/web/js/turkazan.js"></script>
+<script>
+    $(document).ready(function () {
+
+        $('.countdown_discount').timeTo({
+            timeTo: new Date('2017, 05, 26'),
+            displayDays: 2,
+        });
+        //$('.countdown_discount').timeTo(new Date('May 14 2017'));
+
+        /*$('#resForm form').submit(function(e) {
+         e.preventDefault();
+         var name = $(this).find('input[name="tourist-name"]').val();
+         var phone = $(this).find('input[name="tourist-phone"]').val();
+         var day = $(this).find('input[name="tour-day"]').val();
+         var tour = $(this).find('input[name="tour-title"]').val();
+         var form = $(this);
+         form.find('input[type="submit"]').hide();
+
+         $.post(
+         "/main/sender/index",
+         {
+         name: name,
+         phone: phone,
+         day: day,
+         tour: tour
+         },
+         function(data) {
+
+         form.find('.result').html('Заявка отправлена');
+         }
+         );
+
+         return false;
+         });*/
+
+        $(".modal_link").fancybox({
+            padding: 0,
+            closeBtn: false,
+        });
+        $(".fancylink").fancybox({
+            beforeShow: function () {
+                $('.fancybox-skin').css({'background': '#fff'});
+            }
+        });
+        $('.slick_slider').slick({
+            slidesToShow: 4,
+            slidesToScroll: 1,
+            responsive: [
+                {
+                    breakpoint: 600,
+                    settings: {
+                        slidesToShow: 2,
+                        slidesToScroll: 1
+                    }
+                },
+                {
+                    breakpoint: 480,
+                    settings: {
+                        slidesToShow: 1,
+                        slidesToScroll: 1
+                    }
+                }
+            ]
+        });
+
+        $('.ajax-filter .checkbox-list').on('click', 'span', function () {
+            if ($(this).hasClass('active')) {
+                $(this).removeClass('active');
+                GetToursAjax();
+            } else {
+                $(this).addClass('active');
+                GetToursAjax();
+            }
+        });
+
+        var config_datepicker = {
+            inline: true,
+            container: '#date-range-container',
+            alwaysOpen: true,
+            singleMonth: true,
+            startOfWeek: 'monday',
+            customTopBar: ' ',
+            startDate: new Date(),
+        };
+
+        if ($("div").is("#date-range-container")) {
+            $('input[name="daterange"]').dateRangePicker(config_datepicker);
+            var temp_date = $('#tempDateRange').val();
+            if (temp_date)
+                $('.holiday-list .date:contains("' + temp_date + '")').parents('li').addClass('active');
+        }
+
+
+        if ($("div").is(".excursion-wrap")) {
+
+            var excursion_id = $('.excursion-wrap').attr('data-id');
+            var excursion_days = $('.excursion-wrap').attr('data-days');
+            excursion_days = excursion_days.replace("7", "0");
+            var days_arr = excursion_days.split(',');
+            console.log(days_arr);
+
+            var now = new Date();
+            console.log(now.getDay());
+
+
+            $("#reservation-date").datepicker({
+                dateFormat: "dd.mm.yy",
+                currentText: 'Сегодня',
+                monthNames: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+                monthNamesShort: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+                dayNames: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
+                dayNamesShort: ['вск', 'пнд', 'втр', 'срд', 'чтв', 'птн', 'сбт'],
+                dayNamesMin: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+                weekHeader: 'Нед',
+                firstDay: 1,
+                showMonthAfterYear: false,
+                yearSuffix: '',
+                minDate: new Date(),
+                beforeShowDay: function (date) {
+                    var excursion_days = $('.excursion-row').attr('data-days');
+                    excursion_days = excursion_days.replace("7", "0");
+                    var days_arr = excursion_days.split(',');
+                    var date_obj = new Date(date);
+                    var date_day = date_obj.getDay();
+                    date_day = date_day.toString()
+                    if (days_arr.indexOf(date_day) >= 0) return [true, "tourDateSelect"];
+                    return [true, "ui-datepicker-unselectable ui-state-disabled"];
+                },
+                onSelect: function (date, inst) {
+
+                    //$('#tourDate').val(date);
+                    $.get(
+                        "/excursions/ajax/getdatetime",
+                        {id: $('#reservation-excursion_id').val(), date: date},
+                        function (data) {
+                            $('#reservation-time').empty();
+                            //console.log(data);
+                            if (data.result) {
+                                var result_array = data.result;
+                                result_array.forEach(function (item, i) {
+                                    $('#reservation-time').append("<option value='" + item + "'>" + item + "</option>");
+                                });
+                                SelectPayment();
+
+                                //$('#reservation-date').val(data);
+                            }
+                        }
+                    );
+
+
+                }
+            });
+
+
+            $("#datepicker").datepicker({
+                dateFormat: "dd.mm.yy",
+                currentText: 'Сегодня',
+                monthNames: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+                monthNamesShort: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+                dayNames: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
+                dayNamesShort: ['вск', 'пнд', 'втр', 'срд', 'чтв', 'птн', 'сбт'],
+                dayNamesMin: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+                weekHeader: 'Нед',
+                firstDay: 1,
+                isRTL: false,
+                showMonthAfterYear: false,
+                yearSuffix: '',
+                minDate: new Date(),
+                beforeShowDay: function (date) {
+                    var date_obj = new Date(date);
+                    var date_day = date_obj.getDay();
+                    date_day = date_day.toString()
+
+                    if (days_arr.indexOf(date_day) >= 0) return [true, "tourDateSelect"];
+                    return [true, "ui-datepicker-unselectable ui-state-disabled"];
+                },
+                onSelect: function (date, inst) {
+
+                    $('#tourDate').val(date);
+                    //console.log(inst.parents('td').hasClass('tourDateSelect'));
+                }
+            });
+
+            $('#reservation-time').on('change input', SelectPayment);
+
+
+        }
+
+
+        $('.count-wrap').on('click', 'i', function () {
+            var count_input = $(this).parent('.count-wrap').find('input[type="text"]').val();
+            var input = $(this).parent('.count-wrap').find('input[type="text"]');
+            var form = $(this).parents('.form-default');
+            var cost_row = form.find('.cost-row');
+            var cost = cost_row.attr('data-price');
+            var cost_child = cost_row.attr('data-child-price');
+
+            count_input = parseInt(count_input);
+
+            if ($(this).hasClass('minus')) {
+                count_input = count_input - 1;
+                if (count_input >= 0) {
+                    input.val(count_input);
+                    input.change();
+                    //input.change(function() { input.val(count_input); });
+
+                }
+            }
+            if ($(this).hasClass('plus')) {
+                count_input = count_input + 1;
+                if (count_input < 100) {
+                    input.val(count_input);
+                    input.change();
+                    //input.change(function() { input.val(count_input); });
+
+                }
+            }
+
+            getPriceFunc();
+
+        });
+
+        $('#reservation-promo, #reservation-count_child, #reservation-count_adult').on('keyup change input', getPriceFunc);
+
+        $('.check-status-block form').submit(function (e) {
+            e.preventDefault();
+            var form = $(this);
+            var phone = $(this).find('input[name="phone"]').val();
+            if (phone) {
+                $.get(
+                    "/excursions/ajax/getstatus",
+                    {
+                        phone: phone
+                    },
+                    function (data) {
+
+                        if (data)
+                            form.next('.status-result').html(data).slideDown('fast');
+                    }
+                );
+
+            }
+
+            return false;
+        });
+
+
+        $('.menu-link-320').click(function () {
+            $('.menu-320').fadeIn('fast');
+        });
+        $('.menu-320 .close').click(function () {
+            $(this).parents('.menu-320').fadeOut('fast');
+        });
+
+
+    });
+
+    function GetToursAjax() {
+        var checked_array = [];
+        $('.ajax-filter .checkbox-list span.active').each(function () {
+            checked_array.push($(this).attr('data-value'));
+        });
+
+        $.post(
+            "/excursions/ajax/index",
+            {
+                days: checked_array
+            },
+            function (data) {
+                if (data)
+                    $('.tour-list-main').html(data);
+            }
+        );
+    }
+
+    function SelectPayment() {
+        $('.online-payment-none').show();
+        $('.online-payment-show').hide();
+        $('#reservation-payment_id').val(2);
+
+        var excursion_id = $('#reservation-excursion_id').val();
+        var excursion_date = $('#reservation-date').val();
+        var excursion_time = $('#reservation-time').val();
+        if (excursion_id && excursion_date && excursion_time) {
+            console.log(excursion_id);
+            console.log(excursion_date);
+            console.log(excursion_time);
+            $.get("/excursions/ajax/get-count-reservation",
+                {excursion_id: excursion_id, date: excursion_date, time: excursion_time},
+                function (data) {
+                    if (data.result && data.result >= 10) {
+                        $('.online-payment-none').hide();
+                        $('.online-payment-show').show();
+                    }
+                    getPriceFunc();
+                }
+            );
+
+        }
+
+        getPriceFunc();
+    }
+
+    function getPriceFunc() {
+
+        var form = $('#resForm');
+        var excursion_id = form.find('#reservation-excursion_id').val();
+        var excursion_date = form.find('#reservation-date').val();
+        var excursion_time = form.find('#reservation-time').val();
+        var count_adult = form.find('#reservation-count_adult').val();
+        var count_child = form.find('#reservation-count_child').val();
+        var payment_id = form.find('#reservation-payment_id').val();
+        var promo = form.find('#reservation-promo').val();
+
+        form.find('.old_price').empty();
+
+        $.get("/excursions/ajax/get-price",
+            {
+                excursion_id: excursion_id,
+                count_adult: count_adult,
+                count_child: count_child,
+                payment_id: payment_id,
+                promo: promo,
+                date: excursion_date,
+                time: excursion_time,
+            },
+            function (data) {
+                if (data.result) {
+                    form.find('#fullCostB').text(data.result.price);
+                    form.find('.cost-row').show();
+                    if (data.result.oldprice && data.result.oldprice != data.result.price) form.find('.oldprice').text(data.result.oldprice);
+                }
+
+            }
+        );
+
+
+    }
+
+</script>
+
+<script type="text/javascript">
+    jQuery(function ($) {
+        $(".phone-mask").mask("+7 (999) 999-99-99");
+
+    });
+
+
+</script>
+
+<div class="menu-320">
+    <span class="close">Закрыть</span>
+    <div class="menu-wrap">
+        <div class="menu-cell">
+
+
+            <ul class="line-menu">
+                <li><a href="/">Главная</a></li>
+                <li><a href="/info/individual-excursion">Индивидуальные экскурсии (VIP)</a></li>
+                <li><a href="/info/about-us">О нас</a></li>
+                <li><a href="/info/for-tourist">Туристам</a></li>
+                <li><a href="/info/agency">Агентствам</a></li>
+                <li><a href="/info/info">Офисы продаж</a></li>
+                <li><a href="/info/contacts">Контакты</a></li>
+                <li class="singin-link"><a href="/login">Войти</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function (d, w, c) {
+        (w[c] = w[c] || []).push(function () {
+            try {
+                w.yaCounter38773670 = new Ya.Metrika({
+                    id: 38773670,
+                    clickmap: true,
+                    trackLinks: true,
+                    accurateTrackBounce: true,
+                    webvisor: true
+                });
+            } catch (e) {
+            }
+        });
+
+        var n = d.getElementsByTagName("script")[0],
+            s = d.createElement("script"),
+            f = function () {
+                n.parentNode.insertBefore(s, n);
+            };
+        s.type = "text/javascript";
+        s.async = true;
+        s.src = "https://mc.yandex.ru/metrika/watch.js";
+
+        if (w.opera == "[object Opera]") {
+            d.addEventListener("DOMContentLoaded", f, false);
+        } else {
+            f();
+        }
+    })(document, window, "yandex_metrika_callbacks");
+</script>
+<noscript>
+    <div><img src="https://mc.yandex.ru/watch/38773670" style="position:absolute; left:-9999px;" alt=""/></div>
+</noscript>
+<!-- /Yandex.Metrika counter -->
+
+<script type="text/javascript" src="//cdn.callbackhunter.com/cbh.js?hunter_code=206a129633d420ae1356ca10fc51a34e"
+        charset="UTF-8"></script>
+
+</body>
+</html>
+
