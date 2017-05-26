@@ -1,6 +1,8 @@
 # Backend for Android version of Intour24.
 Still under development. Such is life.
 
+
+Doge should be below, but something went wrong, so use your imagination.
 ─────────▄──────────────▄
 ────────▌▒█───────────▄▀▒▌
 ────────▌▒▒▀▄───────▄▀▒▒▒▐
