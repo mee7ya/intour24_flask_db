@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 
 import parsing.db.local_db_connect as db
 from parsing.settings import TourModel
+import calendar
 
 SITE_URL = 'http://kazantravel.ru'
 HOME_URL = 'http://kazantravel.ru/tours/'
@@ -45,7 +46,7 @@ def parse_price(tour_soup):
 
 def parse_dates(tour_soup, title, price):
     schedule_soup = tour_soup.find('dl', class_='dl dl-horizontal booking-tour-days')
-    weekday_names = [weekday_num(w) for w in schedule_soup.find_all('dt')]
+    weekday_names = [weekday_num(day) for day in schedule_soup.find_all('dt')]
     weekday_params = schedule_soup.find_all('dd')
     tours = []
     if not len(weekday_names) == 0:
@@ -67,23 +68,12 @@ def parse_dates(tour_soup, title, price):
     return tours
 
 
-def weekday_num(w):
-    w = w.text
-    if w == 'Понедельник':
-        return 0
-    if w == 'Вторник':
-        return 1
-    if w == 'Среда':
-        return 2
-    if w == 'Четверг':
-        return 3
-    if w == 'Пятница':
-        return 4
-    if w == 'Суббота':
-        return 5
-    if w == 'Воскресенье':
-        return 6
-
+def weekday_num(day):
+    days = {
+        'Понедельник': 0, "Вторник": 1, "Среда": 2, "Четверг": 3, "Пятница": 4, "Суббота": 5, "Воскресенье": 6
+    }
+    for day in days:
+        return days[day]
 
 def day_in_period(day, str_period):
     _, str_start_date, str_end_date, _ = split(r'[(]|[)]|[-]', str_period)

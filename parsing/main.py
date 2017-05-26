@@ -17,5 +17,4 @@ if __name__ == '__main__':
     for tour in tours[0:1]:
         tour.save(database)
     print(time.time() - t)
-
     database.close()

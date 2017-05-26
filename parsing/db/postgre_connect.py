@@ -10,8 +10,13 @@ class Tour:
 
     def save(self, db):
         db.cur.execute("INSERT INTO excursions (name, schedule, duration, price) VALUES ('{}', '{}', '{}', '{}');"
-                       .format(self.name, self.date, self.time, self.price))
+                       .format(self.title, self.date, self.time, self.price))
         db.conn.commit()
+
+    # def select(self, db):
+    #     db.cur.execute("SELECT name FROM excursions")
+    #     result = db.cur.fetchall()
+    #     print(str(result))
 
 
 class DBConnect:
