@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask_restful import Resource, Api
 from operator import itemgetter
+from nikita_first_python_program import convert
 import psycopg2
 
 app = Flask(__name__)
@@ -32,11 +33,11 @@ class Excursions(Resource):
                                     'description': row[2],
                                     'price': row[3],
                                     'capacity': row[4],
-                                    'is_picking': row[5],
-                                    'default_picking_place': row[6],
+                                    'isPicking': row[5],
+                                    'startPlace': row[6],
                                     'schedule': row[7],
-                                    'average_rating': row[8],
-                                    'duration': row[9]})
+                                    'averageRating': row[8],
+                                    'duration': convert(row[9]) })
         return jsonify(excursions=json_response)
 
 
