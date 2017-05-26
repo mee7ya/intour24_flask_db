@@ -1,12 +1,13 @@
 import datetime
-from bs4 import BeautifulSoup
-import urllib.request
-import ssl
-import parsing.db_model as db
 import re
+import ssl
+import urllib.request
 
+from bs4 import BeautifulSoup
 
-# from postgre_connect import DBConnect as db
+import parsing.db.local_db_connect as db
+from parsing.settings import TourModel
+
 
 def make_url():
     start_date = datetime.datetime.today()
@@ -38,7 +39,7 @@ def _parse(html):
 
 
 def parse_tour(tour_soup):
-    tour = db.Tour()
+    tour = TourModel()
     tour.title = parse_title(tour_soup)
     tour.date = parse_date(tour_soup)
     tour.price = parse_price(tour_soup)
@@ -77,8 +78,4 @@ def parse():
 
 if __name__ == '__main__':
     db.migrate()
-    # database = DBConnect('dbafp', 'user', 'pass')
-
     parse()
-
-    # database.close()

@@ -2,7 +2,7 @@ from peewee import *
 from peewee import create_model_tables
 from playhouse.sqlite_ext import SqliteDatabase
 
-DATABASE = 'tours.db'
+DATABASE = '/tours.db'
 database = SqliteDatabase(DATABASE)
 
 

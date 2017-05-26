@@ -1,11 +1,9 @@
 import time
 
-from parsing.db.postgre_connect import DBConnect
+import parsing.db.local_db_connect as db
 from parsing.parsers import kazantravel, tur_kazan
 
 if __name__ == '__main__':
-    database = DBConnect()
-
     tours = []
     t = time.time()
     tours.extend(kazantravel.parse())
@@ -14,8 +12,10 @@ if __name__ == '__main__':
     tours.extend(tur_kazan.parse())
     print(time.time() - t)
 
-    for tour in tours[0:1]:
-        tour.save(database)
-    print(time.time() - t)
+    db.migrate()
 
-    database.close()
+    print(len(tours))
+
+    for tour in tours:
+        tour.save()
+    print(time.time() - t)

@@ -1,11 +1,12 @@
-from bs4 import BeautifulSoup
-import urllib.request
 import ssl
+import urllib.request
 from datetime import *
-import parsing.db_model as db
 from re import split
 
-# from postgre_connect import DBConnect as db
+from bs4 import BeautifulSoup
+
+import parsing.db.local_db_connect as db
+from parsing.settings import TourModel
 
 SITE_URL = 'http://kazantravel.ru'
 HOME_URL = 'http://kazantravel.ru/tours/'
@@ -56,7 +57,7 @@ def parse_dates(tour_soup, title, price):
                 last_day = datetime.today() + timedelta(days=DAY_THRESHOLD + 1)
                 while day < last_day:
                     if day.weekday() == weekday_names[i] and day_in_period(day, periods[j].text):
-                        tour = db.Tour()
+                        tour = TourModel()
                         tour.title = title
                         tour.price = price
                         tour.date = day.strftime('%d.%m')
@@ -99,8 +100,4 @@ def parse():
 
 if __name__ == '__main__':
     db.migrate()
-    # database = DBConnect('dbafp', 'user', 'pass')
-
     parse()
-
-    # database.close()

@@ -9,13 +9,14 @@ class Tour:
         self.time = None
 
     def save(self, db):
-        db.cur.execute("INSERT INTO tours (nane, date, time, price) VALUES ({}, {}, {}, {});"
+        db.cur.execute("INSERT INTO excursions (name, schedule, duration, price) VALUES ('{}', '{}', '{}', '{}');"
                        .format(self.name, self.date, self.time, self.price))
         db.conn.commit()
 
 
 class DBConnect:
-    def __init__(self, db_name, user_name, password, connect=True, host=None):
+    def __init__(self, db_name='intour24', user_name='intour24_admin', password='intour24_admin', connect=True,
+                 host='10.240.20.53'):
         self.PARAMS = "dbname='{}' user='{}' password='{}' host={}".format(db_name, user_name, password, host)
         self.conn = None
         self.cur = None
@@ -29,3 +30,7 @@ class DBConnect:
     def close(self):
         self.cur.close()
         self.conn.close()
+
+    def test_insert(self):
+        self.cur.execute("INSERT INTO excursions (name, price) VALUES ('{}', '{}');".format('test', '1'))
+        self.conn.commit()
