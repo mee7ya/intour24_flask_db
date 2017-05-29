@@ -1,53 +1,57 @@
-from flask import Flask, jsonify
-from flask_restful import Resource, Api
-from operator import itemgetter
+from flask import Flask, jsonify, url_for
+from flask_restful import Resource, Api, reqparse
 from nikita_first_python_program import convert
-import psycopg2
+import intour24_database as db
 
 app = Flask(__name__)
 api = Api(app)
 app.config['JSON_SORT_KEYS'] = False
 
-db = psycopg2.connect("dbname='intour24' user='intour24_admin' host='localhost' password='intour24_admin'")
-
 
 class Excursions(Resource):
     def get(self):
-        #parser = reqparse.RequestParser()
-        #parser.add_argument('id', type=int)
-        #parser.add_argument('name')
-        #args = parser.parse_args()
-        #constraints = 'WHERE'
-        #for arg in args:
-        #    if type(args[arg]) is not None:
-        #        constraints += +" "+arg + "=" + args[arg]
-        query = 'SELECT * FROM excursions'
-        cursor = db.cursor()
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        rows = sorted(rows, key=itemgetter(0))
+        PARAMETERS = ['id', 'name', 'description', 'price', 'capacity', 'isPicking',
+                      'startPlace', 'schedule', 'averageRating', 'duration']
+        TABLE = 'excursions'
+        parser = reqparse.RequestParser()
+        parser.add_argument(PARAMETERS[0], type=int)
+        parser.add_argument(PARAMETERS[1])
+        parser.add_argument(PARAMETERS[2])
+        parser.add_argument(PARAMETERS[3], type=int)
+        parser.add_argument(PARAMETERS[4])
+        parser.add_argument(PARAMETERS[5])
+        parser.add_argument(PARAMETERS[6])
+        parser.add_argument(PARAMETERS[7])
+        parser.add_argument(PARAMETERS[8])
+        parser.add_argument(PARAMETERS[9])
+        args = parser.parse_args()
+        args_are_empty = 1
+        for arg in args:
+            if args[arg] != None:
+                args_are_empty = 0
+                break
+        if args_are_empty == 1:
+            rows = db.select_query(TABLE, "*")
+        else:
+            rows = db.select_query(TABLE, "*", args)
         json_response = []
         for row in rows:
-            json_response.append({  'id': row[0],
-                                    'name': row[1],
-                                    'description': row[2],
-                                    'price': row[3],
-                                    'capacity': row[4],
-                                    'isPicking': row[5],
-                                    'startPlace': row[6],
-                                    'schedule': row[7],
-                                    'averageRating': row[8],
-                                    'duration': convert(row[9]) })
+            json_response.append({PARAMETERS[0]: row[0],
+                                  PARAMETERS[1]: row[1],
+                                  PARAMETERS[2]: row[2],
+                                  PARAMETERS[3]: row[3],
+                                  PARAMETERS[4]: row[4],
+                                  PARAMETERS[5]: row[5],
+                                  PARAMETERS[6]: row[6],
+                                  PARAMETERS[7]: row[7],
+                                  PARAMETERS[8]: row[8],
+                                  PARAMETERS[9]: convert(row[9])})
         return jsonify(excursions=json_response)
 
 
 class Sights(Resource):
     def get(self):
-        query = 'SELECT * FROM sights'
-        cursor = db.cursor()
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        rows = sorted(rows, key=itemgetter(0))
+        rows = db.select_query("sights", "*")
         json_response = []
         for row in rows:
             json_response.append({'id': row[0],
@@ -59,7 +63,9 @@ class Sights(Resource):
 
 api.add_resource(Excursions, '/Excursions.json')
 api.add_resource(Sights, '/Sights.json')
+# app.add_url_rule('/favicon.ico', redirect_to=url_for('static', filename='favicon.ico'))
 
-
+db.connect(db_name="intour24", host="localhost", login="intour24_admin", password="intour24_admin")
+# db = psycopg2.connect("dbname='intour24' user='intour24_admin' host='localhost' password='intour24_admin'")
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9000, debug=True);
