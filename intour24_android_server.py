@@ -1,7 +1,7 @@
-from flask import Flask, jsonify, url_for
+from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse
 from nikita_first_python_program import convert
-import intour24_database as db
+import intour24_database
 
 app = Flask(__name__)
 api = Api(app)
@@ -31,9 +31,9 @@ class Excursions(Resource):
                 args_are_empty = 0
                 break
         if args_are_empty == 1:
-            rows = db.select_query(TABLE, "*")
+            rows = db.select_query(table=TABLE)
         else:
-            rows = db.select_query(TABLE, "*", args)
+            rows = db.select_query(table=TABLE, conditions=args)
         json_response = []
         for row in rows:
             json_response.append({PARAMETERS[0]: row[0],
@@ -51,7 +51,8 @@ class Excursions(Resource):
 
 class Sights(Resource):
     def get(self):
-        rows = db.select_query("sights", "*")
+        TABLE = 'sights'
+        rows = db.select_query(table=TABLE)
         json_response = []
         for row in rows:
             json_response.append({'id': row[0],
@@ -65,7 +66,7 @@ api.add_resource(Excursions, '/Excursions.json')
 api.add_resource(Sights, '/Sights.json')
 # app.add_url_rule('/favicon.ico', redirect_to=url_for('static', filename='favicon.ico'))
 
+db = intour24_database.Database()
 db.connect(db_name="intour24", host="localhost", login="intour24_admin", password="intour24_admin")
-# db = psycopg2.connect("dbname='intour24' user='intour24_admin' host='localhost' password='intour24_admin'")
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9000, debug=True);
