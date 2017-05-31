@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 
 import parsing.db.local_db_connect as db
 from parsing.settings import TourModel
-import calendar
 
 SITE_URL = 'http://kazantravel.ru'
 HOME_URL = 'http://kazantravel.ru/tours/'
