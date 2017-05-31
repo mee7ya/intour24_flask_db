@@ -1,70 +1,77 @@
-from flask import Flask, jsonify
-from flask_restful import Resource, Api, reqparse
+from flask import Flask, jsonify, url_for
+from flask_restful import reqparse
 from nikita_first_python_program import convert
+from apscheduler.schedulers.blocking import BlockingScheduler
 import intour24_database
 
 app = Flask(__name__)
-api = Api(app)
 app.config['JSON_SORT_KEYS'] = False
+schedule = BlockingScheduler()
 
 
-class Excursions(Resource):
-    def get(self):
-        PARAMETERS = ['id', 'name', 'description', 'price', 'capacity', 'isPicking',
-                      'startPlace', 'schedule', 'averageRating', 'duration']
-        TABLE = 'excursions'
-        parser = reqparse.RequestParser()
-        parser.add_argument(PARAMETERS[0], type=int)
-        parser.add_argument(PARAMETERS[1])
-        parser.add_argument(PARAMETERS[2])
-        parser.add_argument(PARAMETERS[3], type=int)
-        parser.add_argument(PARAMETERS[4])
-        parser.add_argument(PARAMETERS[5])
-        parser.add_argument(PARAMETERS[6])
-        parser.add_argument(PARAMETERS[7])
-        parser.add_argument(PARAMETERS[8])
-        parser.add_argument(PARAMETERS[9])
-        args = parser.parse_args()
-        args_are_empty = 1
-        for arg in args:
-            if args[arg] != None:
-                args_are_empty = 0
-                break
-        if args_are_empty == 1:
-            rows = db.select_query(table=TABLE)
-        else:
-            rows = db.select_query(table=TABLE, conditions=args)
-        json_response = []
-        for row in rows:
-            json_response.append({PARAMETERS[0]: row[0],
-                                  PARAMETERS[1]: row[1],
-                                  PARAMETERS[2]: row[2],
-                                  PARAMETERS[3]: row[3],
-                                  PARAMETERS[4]: row[4],
-                                  PARAMETERS[5]: row[5],
-                                  PARAMETERS[6]: row[6],
-                                  PARAMETERS[7]: row[7],
-                                  PARAMETERS[8]: row[8],
-                                  PARAMETERS[9]: convert(row[9])})
-        return jsonify(excursions=json_response)
+@app.route("/Excursions.json")
+def excursions():
+    __parameters__ = ['id', 'name', 'description', 'price', 'capacity', 'isPicking',
+                      'averageRating', 'duration', 'categoryId', 'startPlaceId', 'operatorId',
+                      'link_to_site', 'images']
+    __table__ = 'excursions'
+    # parser = reqparse.RequestParser()
+    # parser.add_argument(__parameters__[0], type=int)
+    # parser.add_argument(__parameters__[1])
+    # parser.add_argument(__parameters__[2])
+    # parser.add_argument(__parameters__[3], type=int)
+    # parser.add_argument(__parameters__[4])
+    # parser.add_argument(__parameters__[5])
+    # parser.add_argument(__parameters__[6])
+    # parser.add_argument(__parameters__[7])
+    # parser.add_argument(__parameters__[8])
+    # parser.add_argument(__parameters__[9])
+    # args = parser.parse_args()
+    rows = db.select_query(table=__table__)
+    json_response = []
+    for row in rows:
+        json_response.append({__parameters__[0]: row[0],
+                              __parameters__[1]: row[1],
+                              __parameters__[2]: row[2],
+                              __parameters__[3]: row[3],
+                              __parameters__[4]: row[4],
+                              __parameters__[5]: row[5],
+                              __parameters__[6]: row[6],
+                              __parameters__[7]: convert(row[7]),
+                              __parameters__[8]: row[8],
+                              __parameters__[9]: row[9],
+                              __parameters__[10]: row[10],
+                              __parameters__[11]: row[11],
+                              __parameters__[12]: row[12]})
+    return jsonify(json_response)
 
 
-class Sights(Resource):
-    def get(self):
-        TABLE = 'sights'
-        rows = db.select_query(table=TABLE)
-        json_response = []
-        for row in rows:
-            json_response.append({'id': row[0],
-                                  'name': row[1],
-                                  'geoposition': row[2],
-                                  'images': row[3]})
-        return jsonify(sights=json_response)
+@app.route('/Sights.json')
+def sights():
+    __table__ = 'sights'
+    __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover']
+    rows = db.select_query(table=__table__)
+    json_response = []
+    for row in rows:
+        json_response.append({__parameters__[0]: row[0],
+                              __parameters__[1]: row[1],
+                              __parameters__[2]: row[2],
+                              __parameters__[3]: row[3],
+                              __parameters__[4]: row[4],
+                              __parameters__[5]: row[5]})
+    return jsonify(json_response)
 
 
-api.add_resource(Excursions, '/Excursions.json')
-api.add_resource(Sights, '/Sights.json')
-# app.add_url_rule('/favicon.ico', redirect_to=url_for('static', filename='favicon.ico'))
+@app.route('/favicon.ico')
+def favicon():
+    return url_for('static', filename='favicon.ico')
+
+
+@schedule.scheduled_job('cron', day_of_week='mon-sun', hour=2)
+def scheduled_job():
+    # TODO: add parser execution here
+    print('This job is run every day at 2am.')
+
 
 db = intour24_database.Database()
 db.connect(db_name="intour24", host="localhost", login="intour24_admin", password="intour24_admin")

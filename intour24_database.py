@@ -1,14 +1,16 @@
 import psycopg2
 
 
-class Database():
+class Database:
+    def __init__(self):
+        self.db = None
+
     def connect(self, db_name, host, password, login):
         self.db = psycopg2.connect(
             "dbname=" + chr(39) + db_name + chr(39) +
             " user=" + chr(39) + login + chr(39) +
             " host=" + chr(39) + host + chr(39) +
             " password=" + chr(39) + password + chr(39))
-
 
     def insert_query(self, table, keys, values):
         key_string = ""
@@ -23,14 +25,12 @@ class Database():
         self.db.cursor.execute(query)
         self.db.conn.commit()
 
-
-    def select_query(self, table, columns="*", conditions=None):
+    def select_query(self, table, columns="*"):
         columns_string = ""
         for column in columns:
             columns_string += column + ', '
         columns_string = columns_string[:-2]
-        if conditions == None:
-            query = "SELECT "+columns_string+" FROM "+table+" ORDER BY id"
+        query = "SELECT "+columns_string+" FROM "+table+" ORDER BY id"
         cursor = self.db.cursor()
         cursor.execute(query)
         return cursor.fetchall()

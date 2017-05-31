@@ -9,8 +9,9 @@ class Tour:
         self.time = None
 
     def save(self, db):
-        db.cur.execute("INSERT INTO tours (nane, date, time, price) VALUES ({}, {}, {}, {});"
-                       .format(self.name, self.date, self.time, self.price))
+        quesry = "INSERT INTO excursions (name, schedule, duration, price) VALUES (" + chr(39) + self.title + chr(39) \
+                 +", " + chr(39) + self.date + chr(39) + ", " + chr(39) + self.time + chr(39) + ", " + self.price + ")"
+        db.cur.execute(quesry)
         db.conn.commit()
 
 

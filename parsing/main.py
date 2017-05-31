@@ -1,26 +1,26 @@
-from parsing import tur_kazan
-from parsing import kazantravel
-import parsing.db_model as db
+import tur_kazan
+import kazantravel
+# import db_model as db
 # import parsing.postgre_connect as db
-from parsing.postgre_connect import DBConnect
+from postgre_connect import DBConnect, Tour
 import time
 
 if __name__ == '__main__':
-    tours = []
     t = time.time()
-    tours.extend(kazantravel.parse())
+    tours = kazantravel.parse()
     print(time.time() - t)
     t = time.time()
     tours.extend(tur_kazan.parse())
     print(time.time() - t)
 
-    db.migrate()
-    # database = DBConnect('dbafp', 'user', 'pass')
+    # db.migrate()
+    database = DBConnect(db_name='intour24', user_name='intour24_admin', password='intour24_admin', host='localhost')
 
     print(len(tours))
-
     for tour in tours:
-        tour.save()
+        tour.save(db=database)
     print(time.time() - t)
+
+
 
     # database.close()

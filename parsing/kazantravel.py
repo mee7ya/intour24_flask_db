@@ -2,10 +2,10 @@ from bs4 import BeautifulSoup
 import urllib.request
 import ssl
 from datetime import *
-import parsing.db_model as db
+# import db_model as db
 from re import split
 
-# from postgre_connect import DBConnect as db
+import postgre_connect as db
 
 SITE_URL = 'http://kazantravel.ru'
 HOME_URL = 'http://kazantravel.ru/tours/'
@@ -97,10 +97,12 @@ def parse():
     return _parse(get_html(HOME_URL))
 
 
-if __name__ == '__main__':
-    db.migrate()
+# if __name__ == '__main__':
+    # db.migrate()
     # database = DBConnect('dbafp', 'user', 'pass')
 
-    parse()
+    # list_tours = parse()
+    # for tour in list_tours:
+    #     print(tour.time)
 
     # database.close()

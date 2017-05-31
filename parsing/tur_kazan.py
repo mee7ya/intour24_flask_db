@@ -2,11 +2,12 @@ import datetime
 from bs4 import BeautifulSoup
 import urllib.request
 import ssl
-import parsing.db_model as db
+#import db_model as db
+import postgre_connect as db
 import re
 
 
-# from postgre_connect import DBConnect as db
+#from postgre_connect import DBConnect as db
 
 def make_url():
     start_date = datetime.datetime.today()
@@ -76,8 +77,8 @@ def parse():
 
 
 if __name__ == '__main__':
-    db.migrate()
-    # database = DBConnect('dbafp', 'user', 'pass')
+    # db.migrate()
+    database = db('intour24', 'intour24_admin', 'intour24_admin', 'localhost')
 
     parse()
 
