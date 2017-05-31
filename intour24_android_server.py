@@ -11,9 +11,9 @@ schedule = BlockingScheduler()
 
 @app.route("/Excursions.json")
 def excursions():
-    __parameters__ = ['id', 'name', 'description', 'price', 'capacity', 'isPicking',
+    __parameters__ = ['id', 'name', 'description', 'capacity', 'isPicking',
                       'averageRating', 'duration', 'categoryId', 'startPlaceId', 'operatorId',
-                      'link_to_site', 'images']
+                      'link_to_site', 'images', 'priceId']
     __table__ = 'excursions'
     # parser = reqparse.RequestParser()
     # parser.add_argument(__parameters__[0], type=int)
@@ -36,8 +36,8 @@ def excursions():
                               __parameters__[3]: row[3],
                               __parameters__[4]: row[4],
                               __parameters__[5]: row[5],
-                              __parameters__[6]: row[6],
-                              __parameters__[7]: convert(row[7]),
+                              __parameters__[6]: convert(row[6]),
+                              __parameters__[7]: row[7],
                               __parameters__[8]: row[8],
                               __parameters__[9]: row[9],
                               __parameters__[10]: row[10],
