@@ -74,6 +74,6 @@ def scheduled_job():
 
 
 db = intour24_database.Database()
-db.connect(db_name="intour24", host="localhost", login="intour24_admin", password="intour24_admin")
+db.connect(db_name="intour24", host="localhost", login="intour24_admin", password="R9i477o#W7cv")
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9000, debug=True);
