@@ -9,11 +9,10 @@ app.config['JSON_SORT_KEYS'] = False
 schedule = BlockingScheduler()
 
 
-@app.route("/Excursions.json")
+@app.route('/excursions')
 def excursions():
-    __parameters__ = ['id', 'name', 'description', 'capacity', 'isPicking',
-                      'averageRating', 'duration', 'categoryId', 'startPlaceId', 'operatorId',
-                      'link_to_site', 'images', 'priceId']
+    __parameters__ = ['id', 'name', 'description', 'capacity', 
+                      'averageRating', 'duration', 'categoryId', 'startPlaceId',                      'operatorId', 'link_to_site', 'images', 'priceId']
     __table__ = 'excursions'
     # parser = reqparse.RequestParser()
     # parser.add_argument(__parameters__[0], type=int)
@@ -35,18 +34,18 @@ def excursions():
                               __parameters__[2]: row[2],
                               __parameters__[3]: row[3],
                               __parameters__[4]: row[4],
-                              __parameters__[5]: row[5],
-                              __parameters__[6]: convert(row[6]),
+                              __parameters__[5]: convert(row[5]),
+                              __parameters__[6]: row[6],
                               __parameters__[7]: row[7],
                               __parameters__[8]: row[8],
                               __parameters__[9]: row[9],
                               __parameters__[10]: row[10],
                               __parameters__[11]: row[11],
-                              __parameters__[12]: row[12]})
+                            })
     return jsonify(json_response)
 
 
-@app.route('/Sights.json')
+@app.route('/sights')
 def sights():
     __table__ = 'sights'
     __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover']
@@ -66,6 +65,11 @@ def sights():
 def favicon():
     return url_for('static', filename='favicon.ico')
 
+@app.route('/')
+def ap2():
+    return "API"
+    
+
 
 @schedule.scheduled_job('cron', day_of_week='mon-sun', hour=2)
 def scheduled_job():
@@ -76,4 +80,4 @@ def scheduled_job():
 db = intour24_database.Database()
 db.connect(db_name="intour24", host="localhost", login="intour24_admin", password="R9i477o#W7cv")
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9000, debug=True);
+    app.run();
