@@ -34,3 +34,13 @@ class Database:
         cursor = self.db.cursor()
         cursor.execute(query)
         return cursor.fetchall()
+
+    def select_query_with_id(self, table, c_id, columns="*"):
+        columns_string = ""
+        for column in columns:
+            columns_string += column + ', '
+        columns_string = columns_string[:-2]
+        query = "SELECT " + columns_string + " FROM " + table + " WHERE id=" + c_id + "ORDER BY id"
+        cursor = self.db.cursor()
+        cursor.execute(query)
+        return cursor.fetchall()
