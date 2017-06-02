@@ -220,7 +220,9 @@ def prices():
                               __parameters__[2]: row[2],
                               __parameters__[3]: row[3]
                               })
-    return jsonify(json_response)
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
 
 
 @app.route('/favicon.ico')
