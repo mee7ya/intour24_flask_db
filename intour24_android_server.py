@@ -31,23 +31,35 @@ def excursions():
     c_id = request.args.get('id')
     if c_id is None:
         rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  __parameters__[3]: row[3],
+                                  __parameters__[4]: row[4],
+                                  __parameters__[5]: convert(row[5]),
+                                  __parameters__[6]: row[6],
+                                  __parameters__[7]: row[7],
+                                  __parameters__[8]: row[8],
+                                  __parameters__[9]: row[9],
+                                  __parameters__[10]: row[10],
+                                  __parameters__[11]: row[11]
+                                  })
     else:
         rows = db.select_query_with_id(table=__table__, c_id=c_id)
-    json_response = []
-    for row in rows:
-        json_response.append({__parameters__[0]: row[0],
-                              __parameters__[1]: row[1],
-                              __parameters__[2]: row[2],
-                              __parameters__[3]: row[3],
-                              __parameters__[4]: row[4],
-                              __parameters__[5]: convert(row[5]),
-                              __parameters__[6]: row[6],
-                              __parameters__[7]: row[7],
-                              __parameters__[8]: row[8],
-                              __parameters__[9]: row[9],
-                              __parameters__[10]: row[10],
-                              __parameters__[11]: row[11]
-                            })
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: rows[0][3],
+                         __parameters__[4]: rows[0][4],
+                         __parameters__[5]: convert(rows[0][5]),
+                         __parameters__[6]: rows[0][6],
+                         __parameters__[7]: rows[0][7],
+                         __parameters__[8]: rows[0][8],
+                         __parameters__[9]: rows[0][9],
+                         __parameters__[10]: rows[0][10],
+                         __parameters__[11]: rows[0][11]}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
@@ -61,16 +73,22 @@ def sights():
     c_id = request.args.get('id')
     if c_id is None:
         rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  __parameters__[3]: row[3],
+                                  __parameters__[4]: row[4],
+                                  __parameters__[5]: row[5]})
     else:
         rows = db.select_query_with_id(table=__table__, c_id=c_id)
-    json_response = []
-    for row in rows:
-        json_response.append({__parameters__[0]: row[0],
-                              __parameters__[1]: row[1],
-                              __parameters__[2]: row[2],
-                              __parameters__[3]: row[3],
-                              __parameters__[4]: row[4],
-                              __parameters__[5]: row[5]})
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: rows[0][3],
+                         __parameters__[4]: rows[0][4],
+                         __parameters__[5]: rows[0][5]}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
@@ -83,15 +101,18 @@ def category():
     c_id = request.args.get('id')
     if c_id is None:
         rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1]})
+        json_response = json.dumps(json_response)
     else:
         rows = db.select_query_with_id(table=__table__, c_id=c_id)
-    json_response = []
-    for row in rows:
-        json_response.append({__parameters__[0]: row[0],
-                              __parameters__[1]: row[1]})
-    json_response = json.dumps(json_response)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1]}
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
+
 
 @app.route('/picking_places')
 def picking_places():
@@ -100,13 +121,16 @@ def picking_places():
     c_id = request.args.get('id')
     if c_id is None:
         rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2]})
     else:
         rows = db.select_query_with_id(table=__table__, c_id=c_id)
-    json_response = []
-    for row in rows:
-        json_response.append({__parameters__[0]: row[0],
-                              __parameters__[1]: row[1],
-                              __parameters__[2]: row[2]})
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2]}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
@@ -119,13 +143,16 @@ def operator():
     c_id = request.args.get('id')
     if c_id is None:
         rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2]})
     else:
         rows = db.select_query_with_id(table=__table__, c_id=c_id)
-    json_response = []
-    for row in rows:
-        json_response.append({__parameters__[0]: row[0],
-                              __parameters__[1]: row[1],
-                              __parameters__[2]: row[2]})
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2]}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
@@ -138,16 +165,22 @@ def guides():
     c_id = request.args.get('id')
     if c_id is None:
         rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  __parameters__[3]: row[3],
+                                  __parameters__[4]: row[4],
+                                  __parameters__[5]: row[5]})
     else:
         rows = db.select_query_with_id(table=__table__, c_id=c_id)
-    json_response = []
-    for row in rows:
-        json_response.append({__parameters__[0]: row[0],
-                              __parameters__[1]: row[1],
-                              __parameters__[2]: row[2],
-                              __parameters__[3]: row[3],
-                              __parameters__[4]: row[4],
-                              __parameters__[5]: row[5]})
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: rows[0][3],
+                         __parameters__[4]: rows[0][4],
+                         __parameters__[5]: rows[0][5]}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
@@ -161,20 +194,31 @@ def schedule():
     c_id = request.args.get('id')
     if c_id is None:
         rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  __parameters__[3]: row[3],
+                                  __parameters__[4]: row[4],
+                                  __parameters__[5]: row[5],
+                                  __parameters__[6]: row[6],
+                                  __parameters__[7]: row[7],
+                                  __parameters__[8]: row[8],
+                                  __parameters__[9]: row[9]})
     else:
         rows = db.select_query_with_id(table=__table__, c_id=c_id)
-    json_response = []
-    for row in rows:
-        json_response.append({__parameters__[0]: row[0],
-                              __parameters__[1]: row[1],
-                              __parameters__[2]: row[2],
-                              __parameters__[3]: row[3],
-                              __parameters__[4]: row[4],
-                              __parameters__[5]: row[5],
-                              __parameters__[6]: row[6],
-                              __parameters__[7]: row[7],
-                              __parameters__[8]: row[8],
-                              __parameters__[9]: row[9]})
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: rows[0][3],
+                         __parameters__[4]: rows[0][4],
+                         __parameters__[5]: rows[0][5],
+                         __parameters__[6]: rows[0][6],
+                         __parameters__[7]: rows[0][7],
+                         __parameters__[8]: rows[0][8],
+                         __parameters__[9]: rows[0][9]}
+
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
@@ -188,17 +232,24 @@ def groups():
     c_id = request.args.get('id')
     if c_id is None:
         rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  __parameters__[3]: row[3],
+                                  __parameters__[4]: row[4],
+                                  __parameters__[5]: row[5],
+                                  })
     else:
         rows = db.select_query_with_id(table=__table__, c_id=c_id)
-    json_response = []
-    for row in rows:
-        json_response.append({__parameters__[0]: row[0],
-                              __parameters__[1]: row[1],
-                              __parameters__[2]: row[2],
-                              __parameters__[3]: row[3],
-                              __parameters__[4]: row[4],
-                              __parameters__[5]: row[5],
-                              })
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: rows[0][3],
+                         __parameters__[4]: rows[0][4],
+                         __parameters__[5]: rows[0][5]}
+
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
@@ -211,15 +262,19 @@ def prices():
     c_id = request.args.get('id')
     if c_id is None:
         rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  __parameters__[3]: row[3]
+                                  })
     else:
         rows = db.select_query_with_id(table=__table__, c_id=c_id)
-    json_response = []
-    for row in rows:
-        json_response.append({__parameters__[0]: row[0],
-                              __parameters__[1]: row[1],
-                              __parameters__[2]: row[2],
-                              __parameters__[3]: row[3]
-                              })
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: rows[0][3]}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
