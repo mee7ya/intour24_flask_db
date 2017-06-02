@@ -125,7 +125,9 @@ def operator():
         json_response.append({__parameters__[0]: row[0],
                               __parameters__[1]: row[1],
                               __parameters__[2]: row[2]})
-    return jsonify(json_response)
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
 
 
 @app.route('/guides')
