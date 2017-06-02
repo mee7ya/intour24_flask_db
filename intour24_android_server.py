@@ -4,6 +4,7 @@ from nikita_first_python_program import convert
 from apscheduler.schedulers.blocking import BlockingScheduler
 import intour24_database
 
+
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 app.config['JSON_AS_ASCII'] = False
@@ -203,26 +204,23 @@ def groups():
     return response
 
 
-# @app.route('/excursion_property')
-# def groups():
-#     __table__ = 'groups'
-#     __parameters__ = ['id', 'tour_date', 'seats_reserved', 'excursions_id', 'guide_id',
-#                       'seats_capacity']
-#     c_id = request.args.get('id')
-#     if c_id is None:
-#         rows = db.select_query(table=__table__)
-#     else:
-#         rows = db.select_query_with_id(table=__table__, c_id=c_id)
-#     json_response = []
-#     for row in rows:
-#         json_response.append({__parameters__[0]: row[0],
-#                               __parameters__[1]: row[1],
-#                               __parameters__[2]: row[2],
-#                               __parameters__[3]: row[3],
-#                               __parameters__[4]: row[4],
-#                               __parameters__[5]: row[5],
-#                               })
-#     return jsonify(json_response)
+@app.route('/prices')
+def prices():
+    __table__ = 'prices'
+    __parameters__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+    json_response = []
+    for row in rows:
+        json_response.append({__parameters__[0]: row[0],
+                              __parameters__[1]: row[1],
+                              __parameters__[2]: row[2],
+                              __parameters__[3]: row[3]
+                              })
+    return jsonify(json_response)
 
 
 @app.route('/favicon.ico')
@@ -232,7 +230,8 @@ def favicon():
 
 @app.route('/')
 def ap2():
-    return "API"
+    return 'api'
+
     
 
 # @schedule.scheduled_job('cron', day_of_week='mon-sun', hour=2)
