@@ -113,7 +113,7 @@ def picking_places():
 
 @app.route('/operator')
 def operator():
-    __table__ = 'picking_places'
+    __table__ = 'operator'
     __parameters__ = ['id', 'name', 'phone', 'address', 'logo']
     c_id = request.args.get('id')
     if c_id is None:
