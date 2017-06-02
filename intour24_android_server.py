@@ -16,18 +16,6 @@ def excursions():
     __parameters__ = ['id', 'name', 'description', 'capacity', 
                       'averageRating', 'duration', 'categoryId', 'startPlaceId',                      'operatorId', 'link_to_site', 'images', 'priceId']
     __table__ = 'excursions'
-    # parser = reqparse.RequestParser()
-    # parser.add_argument(__parameters__[0], type=int)
-    # parser.add_argument(__parameters__[1])
-    # parser.add_argument(__parameters__[2])
-    # parser.add_argument(__parameters__[3], type=int)
-    # parser.add_argument(__parameters__[4])
-    # parser.add_argument(__parameters__[5])
-    # parser.add_argument(__parameters__[6])
-    # parser.add_argument(__parameters__[7])
-    # parser.add_argument(__parameters__[8])
-    # parser.add_argument(__parameters__[9])
-    # args = parser.parse_args()
     c_id = request.args.get('id')
     if c_id is None:
         rows = db.select_query(table=__table__)
@@ -63,7 +51,6 @@ def excursions():
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
-    #return jsonify(json_response)
 
 
 @app.route('/sights')
@@ -275,6 +262,260 @@ def prices():
                          __parameters__[1]: rows[0][1],
                          __parameters__[2]: rows[0][2],
                          __parameters__[3]: rows[0][3]}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+@app.route('/excursion_property')
+def excursion_property():
+    __table__ = 'excursion_property'
+    __parameters__ = ['id', 'name', 'image']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2]})
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2]}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+@app.route('/excursions_excursion_property')
+def excursions_excursion_property():
+    __table__ = 'excursions_excursion_property'
+    __parameters__ = ['id', 'excursion_id', 'excursion_property_id']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2]
+                                  })
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2]}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+@app.route('/transport_type')
+def transport_type():
+    __table__ = 'transport_type'
+    __parameters__ = ['id', 'name', 'transport_id']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2]
+                                  })
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2]}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+@app.route('/transport')
+def transport():
+    __table__ = 'transport'
+    __parameters__ = ['id', 'capacity', 'number', 'group_id']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  __parameters__[3]: row[3]
+                                  })
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[2]: rows[0][2]}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+@app.route('/reviews')
+def prices():
+    __table__ = 'reviews'
+    __parameters__ = ['id', 'excursion_id', 'guide_id', 'excursion_rate', 'guide_rate', 'feedback']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  __parameters__[3]: row[3],
+                                  __parameters__[4]: row[4],
+                                  __parameters__[5]: row[5]
+                                  })
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: rows[0][3],
+                         __parameters__[4]: rows[0][4],
+                         __parameters__[5]: rows[0][5]}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+@app.route('/bookings')
+def bookings():
+    __table__ = 'bookings'
+    __parameters__ = ['id', 'tourist_id', 'group_id', 'adults', 'children', 'enfants',
+                      'payment_date', 'amount', 'payment_identifier']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  __parameters__[3]: row[3],
+                                  __parameters__[4]: row[4],
+                                  __parameters__[5]: row[5],
+                                  __parameters__[6]: row[6],
+                                  __parameters__[7]: row[7],
+                                  __parameters__[8]: row[8],
+                                  })
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: rows[0][3],
+                         __parameters__[4]: rows[0][4],
+                         __parameters__[5]: rows[0][5],
+                         __parameters__[6]: rows[0][6],
+                         __parameters__[7]: rows[0][7],
+                         __parameters__[8]: rows[0][8]}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+@app.route('/tourists')
+def tourists():
+    __table__ = 'tourists'
+    __parameters__ = ['id', 'first_name', 'email', 'phone', 'last_name']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  __parameters__[3]: row[3],
+                                  __parameters__[4]: row[4]
+                                  })
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: rows[0][3],
+                         __parameters__[4]: rows[0][4]}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+@app.route('/sight_property')
+def sight_property():
+    __table__ = 'sight_property'
+    __parameters__ = ['id', 'name', 'image']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  })
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2]}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+@app.route('/excursions_sights')
+def excursions_sights():
+    __table__ = 'excursions_sights'
+    __parameters__ = ['id', 'excursion_id', 'sight_id']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  })
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2]}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+@app.route('/sights_sight_property')
+def excursions_sights():
+    __table__ = 'sights_sight_property'
+    __parameters__ = ['id', 'sight_id', 'sight_property_id']
+    c_id = request.args.get('id')
+    if c_id is None:
+        rows = db.select_query(table=__table__)
+        json_response = []
+        for row in rows:
+            json_response.append({__parameters__[0]: row[0],
+                                  __parameters__[1]: row[1],
+                                  __parameters__[2]: row[2],
+                                  })
+    else:
+        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2]}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
