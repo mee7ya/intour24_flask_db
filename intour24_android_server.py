@@ -36,18 +36,16 @@ def excursions():
                                   })
     else:
         __parameters__ = ['id', 'name', 'description', 'duration', 'priceForChildren', 'priceForAdult',
-                          'priceForEnfant', 'pickingPlace', 'capacity', 'startTime', 'rating', 'properties', 'schedule',
+                          'priceForEnfant', 'pickingPlace', 'category', 'rating', 'properties', 'schedule',
                           'images']
         query = 'SELECT e.id, e.name, e.description, e.duration, p.price_for_children, p.price_for_adult, ' \
-                'p.price_for_enfant, pp.name, g.seats_capacity, g.tour_date, ' \
+                'p.price_for_enfant, pp.name, c.name, ' \
                 'e.average_rating, array_agg(ep.name), array_agg(s.start_date), e.images '\
                 'FROM excursions e '\
                 'LEFT JOIN prices p '\
                 'ON e.price_id = p.id '\
                 'LEFT JOIN picking_places pp '\
                 'ON e.picking_place_id = pp.id '\
-                'LEFT JOIN groups g '\
-                'ON g.excursion_id = e.id '\
                 'LEFT JOIN category c '\
                 'ON e.category_id = c.id '\
                 'LEFT JOIN excursions_excursion_property eep '\
@@ -57,7 +55,8 @@ def excursions():
                 'LEFT JOIN schedule s '\
                 'ON s.excursion_id = e.id '\
                 'WHERE e.id =  '+c_id+ \
-                'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, pp.name, g.seats_capacity, g.tour_date, e.average_rating'
+                'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, ' \
+                'pp.name, e.average_rating, c.name'
         rows = db.select_custom_query(table=__table__, query=query);
         json_response = {__parameters__[0]: rows[0][0],
                          __parameters__[1]: rows[0][1],
@@ -71,8 +70,7 @@ def excursions():
                          __parameters__[9]: rows[0][9],
                          __parameters__[10]: rows[0][10],
                          __parameters__[11]: rows[0][11],
-                         __parameters__[12]: rows[0][12],
-                         __parameters__[13]: rows[0][13]}
+                         __parameters__[12]: rows[0][12]}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
