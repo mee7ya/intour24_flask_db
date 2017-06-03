@@ -44,3 +44,8 @@ class Database:
         cursor = self.db.cursor()
         cursor.execute(query)
         return cursor.fetchall()
+
+    def select_custom_query(self, table, query):
+        cursor = self.db.cursor()
+        cursor.execute(query)
+        return cursor.fetchall()

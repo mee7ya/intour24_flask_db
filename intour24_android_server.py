@@ -4,7 +4,6 @@ from nikita_first_python_program import convert
 from apscheduler.schedulers.blocking import BlockingScheduler
 import intour24_database
 
-
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 app.config['JSON_AS_ASCII'] = False
@@ -13,8 +12,9 @@ schedule = BlockingScheduler()
 
 @app.route('/excursions')
 def excursions():
-    __parameters__ = ['id', 'name', 'description', 'capacity', 
-                      'averageRating', 'duration', 'categoryId', 'startPlaceId',                      'operatorId', 'link_to_site', 'images', 'priceId']
+    __parameters__ = ['id', 'name', 'description', 'capacity',
+                      'averageRating', 'duration', 'categoryId', 'startPlaceId', 'operatorId', 'link_to_site', 'images',
+                      'priceId']
     __table__ = 'excursions'
     c_id = request.args.get('id')
     if c_id is None:
@@ -35,19 +35,44 @@ def excursions():
                                   __parameters__[11]: row[11]
                                   })
     else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+        __parameters__ = ['id', 'name', 'description', 'duration', 'priceForChildren', 'priceForAdult',
+                          'priceForEnfant', 'pickingPlace', 'capacity', 'startTime', 'rating', 'properties', 'schedule',
+                          'images']
+        query = 'SELECT e.id, e.name, e.description, e.duration, p.price_for_children, p.price_for_adult, ' \
+                'p.price_for_enfant, pp.name, g.seats_capacity, g.tour_date, ' \
+                'e.average_rating, array_agg(ep.name), array_agg(s.start_date), e.images '\
+                'FROM excursions e '\
+                'LEFT JOIN prices p '\
+                'ON e.price_id = p.id '\
+                'LEFT JOIN picking_places pp '\
+                'ON e.picking_place_id = pp.id '\
+                'LEFT JOIN groups g '\
+                'ON g.excursion_id = e.id '\
+                'LEFT JOIN category c '\
+                'ON e.category_id = c.id '\
+                'LEFT JOIN excursions_excursion_property eep '\
+                'ON e.id = eep.excursion_id '\
+                'LEFT JOIN excursion_property ep '\
+                'ON ep.id = eep.excursion_property_id '\
+                'LEFT JOIN schedule s '\
+                'ON s.excursion_id = e.id '\
+                'WHERE e.id =  '+c_id+ \
+                'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, pp.name, g.seats_capacity, g.tour_date, e.average_rating'
+        rows = db.select_custom_query(table=__table__, query=query);
         json_response = {__parameters__[0]: rows[0][0],
                          __parameters__[1]: rows[0][1],
                          __parameters__[2]: rows[0][2],
-                         __parameters__[3]: rows[0][3],
+                         __parameters__[3]: convert(rows[0][3]),
                          __parameters__[4]: rows[0][4],
-                         __parameters__[5]: convert(rows[0][5]),
+                         __parameters__[5]: rows[0][5],
                          __parameters__[6]: rows[0][6],
                          __parameters__[7]: rows[0][7],
                          __parameters__[8]: rows[0][8],
                          __parameters__[9]: rows[0][9],
                          __parameters__[10]: rows[0][10],
-                         __parameters__[11]: rows[0][11]}
+                         __parameters__[11]: rows[0][11],
+                         __parameters__[12]: rows[0][12],
+                         __parameters__[13]: rows[0][13]}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
@@ -361,7 +386,7 @@ def transport():
 
 
 @app.route('/reviews')
-def prices():
+def reviews():
     __table__ = 'reviews'
     __parameters__ = ['id', 'excursion_id', 'guide_id', 'excursion_rate', 'guide_rate', 'feedback']
     c_id = request.args.get('id')
@@ -499,7 +524,7 @@ def excursions_sights():
 
 
 @app.route('/sights_sight_property')
-def excursions_sights():
+def sights_sight_property():
     __table__ = 'sights_sight_property'
     __parameters__ = ['id', 'sight_id', 'sight_property_id']
     c_id = request.args.get('id')
@@ -530,12 +555,11 @@ def favicon():
 def ap2():
     return 'api'
 
-    
 
 # @schedule.scheduled_job('cron', day_of_week='mon-sun', hour=2)
 # def scheduled_job():
-    # TODO: add parser execution here
-    # print('This job is run every day at 2am.')
+# TODO: add parser execution here
+# print('This job is run every day at 2am.')
 
 
 db = intour24_database.Database()
