@@ -111,7 +111,7 @@ def sights():
                                   __parameters__[6]: min_value,
                                   __parameters__[7]: max_value})
     else:
-        __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover', 'propertyName', 'propertyIcons', 'excursions']
+        __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover', 'properties', 'excursions']
         query = 'SELECT s.*, array_agg(DISTINCT sp.name), array_agg(DISTINCT sp.image), array_agg(DISTINCT e.name) ' \
                 'FROM sights s ' \
                 'LEFT JOIN sights_sight_property ssp ' \
@@ -126,15 +126,18 @@ def sights():
                 'GROUP BY s.id ' \
                 'ORDER BY s.id;'
         rows = db.select_custom_query(table=__table__, query=query)
+        properties = []
+        for i in range(0, len(rows[0][6])):
+            properties.append({'name': rows[0][6][i],
+                               'icon': rows[0][7][i]})
         json_response = {__parameters__[0]: rows[0][0],
                          __parameters__[1]: rows[0][1],
                          __parameters__[2]: rows[0][2],
                          __parameters__[3]: rows[0][3],
                          __parameters__[4]: rows[0][4],
                          __parameters__[5]: rows[0][5],
-                         __parameters__[6]: rows[0][6],
-                         __parameters__[7]: rows[0][7],
-                         __parameters__[8]: rows[0][8]}
+                         __parameters__[6]: properties,
+                         __parameters__[7]: rows[0][8]}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
