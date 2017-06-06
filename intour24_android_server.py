@@ -388,14 +388,15 @@ def groups():
     __table__ = 'groups'
     __parameters__ = ['id', 'tour_date', 'seats_reserved', 'excursions_id', 'guide_id',
                       'seats_capacity']
-    rows = db.select_query_with_id(table=__table__)
+    rows = db.select_query(table=__table__)
+    json_response = []
     for row in rows:
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2],
-                         __parameters__[3]: rows[0][3],
-                         __parameters__[4]: rows[0][4],
-                         __parameters__[5]: rows[0][5]}
+        json_response.append({__parameters__[0]: row[0],
+                         __parameters__[1]: row[1],
+                         __parameters__[2]: row[2],
+                         __parameters__[3]: row[3],
+                         __parameters__[4]: row[4],
+                         __parameters__[5]: row[5]})
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
