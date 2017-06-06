@@ -4,7 +4,7 @@ def convert(time):
         size = len(temp)
         time_in_minutes = 0
 
-        if temp[1][0] == 'ч':
+        if temp[1][0] == 'h':
             time_in_minutes += (int(temp[0])) * 60
         else:
             time_in_minutes += int(temp[0])

@@ -1,16 +1,20 @@
-from flask import Flask, jsonify, url_for, request, json, Response
+from flask import Flask, jsonify, url_for, request, json, Response, Blueprint
 from flask_restful import reqparse, abort
 from nikita_first_python_program import convert
 from apscheduler.schedulers.blocking import BlockingScheduler
 import intour24_database
 
+
+bp = Blueprint('main_api', __name__, template_folder='templates', url_prefix='/api')
+
 app = Flask(__name__)
+app.register_blueprint(bp)
 app.config['JSON_SORT_KEYS'] = False
 app.config['JSON_AS_ASCII'] = False
 schedule = BlockingScheduler()
 
 
-@app.route('/excursion/<id>')
+@bp.route('/excursion/<id>')
 def excursion(id):
     __table__ = 'excursions'
     __parameters__ = ['id', 'name', 'description', 'duration', 'priceForChildren', 'priceForAdult',
@@ -57,7 +61,7 @@ def excursion(id):
         return response, 400
 
 
-@app.route('/excursions/')
+@bp.route('/excursions/')
 def excursions():
     __parameters__ = ['id', 'name', 'description', 'capacity',
                       'averageRating', 'duration', 'categoryId', 'startPlaceId', 'operatorId', 'link_to_site', 'images',
@@ -84,7 +88,7 @@ def excursions():
     return response
 
 
-@app.route('/sight/<id>')
+@bp.route('/sight/<id>')
 def sight(id):
     __table__ = 'sights'
     __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover', 'properties', 'excursions']
@@ -125,7 +129,7 @@ def sight(id):
         return response, 400
 
 
-@app.route('/sights/')
+@bp.route('/sights/')
 def sights():
     __table__ = 'sights'
     __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover', 'minPrice', 'maxPrice']
@@ -162,7 +166,7 @@ def sights():
     return response
 
 
-@app.route('/category')
+@bp.route('/category')
 def category():
     __table__ = 'category'
     __parameters__ = ['id', 'name']
@@ -182,7 +186,7 @@ def category():
     return response
 
 
-@app.route('/picking_places')
+@bp.route('/picking_places')
 def picking_places():
     __table__ = 'picking_places'
     __parameters__ = ['id', 'name', 'geoposition']
@@ -204,7 +208,7 @@ def picking_places():
     return response
 
 
-@app.route('/operator')
+@bp.route('/operator')
 def operator():
     __table__ = 'operator'
     __parameters__ = ['id', 'name', 'phone', 'address', 'logo']
@@ -226,7 +230,7 @@ def operator():
     return response
 
 
-@app.route('/guides')
+@bp.route('/guides')
 def guides():
     __table__ = 'guides'
     __parameters__ = ['id', 'first_name', 'e-mail', 'phone', 'last_name', 'average_rating']
@@ -254,7 +258,7 @@ def guides():
     return response
 
 
-@app.route('/schedule')
+@bp.route('/schedule')
 def schedule():
     __table__ = 'schedule'
     __parameters__ = ['id', 'tour_date', 'repeat_interval', 'repeat_weekday', 'repeat_week',
@@ -292,7 +296,7 @@ def schedule():
     return response
 
 
-@app.route('/groups')
+@bp.route('/groups')
 def groups():
     __table__ = 'groups'
     __parameters__ = ['id', 'tour_date', 'seats_reserved', 'excursions_id', 'guide_id',
@@ -323,7 +327,7 @@ def groups():
     return response
 
 
-@app.route('/prices')
+@bp.route('/prices')
 def prices():
     __table__ = 'prices'
     __parameters__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
@@ -348,7 +352,7 @@ def prices():
     return response
 
 
-@app.route('/excursion_property')
+@bp.route('/excursion_property')
 def excursion_property():
     __table__ = 'excursion_property'
     __parameters__ = ['id', 'name', 'image']
@@ -370,7 +374,7 @@ def excursion_property():
     return response
 
 
-@app.route('/excursions_excursion_property')
+@bp.route('/excursions_excursion_property')
 def excursions_excursion_property():
     __table__ = 'excursions_excursion_property'
     __parameters__ = ['id', 'excursion_id', 'excursion_property_id']
@@ -393,7 +397,7 @@ def excursions_excursion_property():
     return response
 
 
-@app.route('/transport_type')
+@bp.route('/transport_type')
 def transport_type():
     __table__ = 'transport_type'
     __parameters__ = ['id', 'name', 'transport_id']
@@ -416,7 +420,7 @@ def transport_type():
     return response
 
 
-@app.route('/transport')
+@bp.route('/transport')
 def transport():
     __table__ = 'transport'
     __parameters__ = ['id', 'capacity', 'number', 'group_id']
@@ -441,7 +445,7 @@ def transport():
     return response
 
 
-@app.route('/reviews')
+@bp.route('/reviews')
 def reviews():
     __table__ = 'reviews'
     __parameters__ = ['id', 'excursion_id', 'guide_id', 'excursion_rate', 'guide_rate', 'feedback']
@@ -470,7 +474,7 @@ def reviews():
     return response
 
 
-@app.route('/bookings')
+@bp.route('/bookings')
 def bookings():
     __table__ = 'bookings'
     __parameters__ = ['id', 'tourist_id', 'group_id', 'adults', 'children', 'enfants',
@@ -506,7 +510,7 @@ def bookings():
     return response
 
 
-@app.route('/tourists')
+@bp.route('/tourists')
 def tourists():
     __table__ = 'tourists'
     __parameters__ = ['id', 'first_name', 'email', 'phone', 'last_name']
@@ -533,7 +537,7 @@ def tourists():
     return response
 
 
-@app.route('/sight_property')
+@bp.route('/sight_property')
 def sight_property():
     __table__ = 'sight_property'
     __parameters__ = ['id', 'name', 'image']
@@ -556,7 +560,7 @@ def sight_property():
     return response
 
 
-@app.route('/excursions_sights')
+@bp.route('/excursions_sights')
 def excursions_sights():
     __table__ = 'excursions_sights'
     __parameters__ = ['id', 'excursion_id', 'sight_id']
@@ -579,7 +583,7 @@ def excursions_sights():
     return response
 
 
-@app.route('/sights_sight_property')
+@bp.route('/sights_sight_property')
 def sights_sight_property():
     __table__ = 'sights_sight_property'
     __parameters__ = ['id', 'sight_id', 'sight_property_id']
@@ -602,12 +606,12 @@ def sights_sight_property():
     return response
 
 
-@app.route('/favicon.ico')
+@bp.route('/favicon.ico')
 def favicon():
     return url_for('static', filename='favicon.ico')
 
 
-@app.route('/')
+@bp.route('/')
 def ap2():
     return 'api'
 
