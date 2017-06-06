@@ -8,8 +8,6 @@ from datetime import *
 
 SITE_URL = 'https://tur-kazan.ru'
 
-added = []
-
 
 def convert(time):
     if type(time) == str:
@@ -72,21 +70,24 @@ def _parse(url):
 def parse_tour(tours_soup):
     soup = BeautifulSoup(tours_soup, "html.parser")
     tour = Models.Tour()
-    # tour.save()
+    tour.price_id = Models.Price.get_price_id(parse_price(soup))
+    tour.title = parse_title(soup)
+    tour.duration = parse_duration(soup)
+    tour.description = parse_description(soup)
+    start_point = parse_start_point(soup)
+    if start_point is not None:
+        tour.start_point = Models.PickingPlace.get_place_id(start_point)
+    else:
+        tour.start_point = 8
+    tour.save()
+
     for dates_info in parse_dates(soup):
         dates = Models.Dates()
         dates.start_date = dates_info[0]
         dates.repeat_interval = dates_info[1]
         dates.excursion_id = tour.id
-        dates.save(dates_info)
-    tour.title = parse_title(soup)
-    tour.price = Models.Price.get_price_id(*parse_price(soup))
-    tour.duration = parse_duration(soup)
-    tour.description = parse_description(soup)
-    start_point = parse_start_point(soup)
-    if start_point is not None:
-        tour.start_point = Models.PickingPlace.get_place_id(*start_point)
-    tour.save()
+        dates.save()
+
     return tour
 
 
@@ -124,8 +125,13 @@ def parse_date(date_str):
             if now.timestamp() >= first_date.timestamp():
                 first_date += timedelta(days=1)
             result.append((first_date.timestamp(), MINS_IN_DAY))
-
-    return result
+    result_formatted = []
+    for item in result:
+        item_formatted = datetime.fromtimestamp(
+            int(item[0])
+        ).strftime('%Y-%m-%d %H:%M:%S')
+        result_formatted.append((item_formatted, item[1]))
+    return result_formatted
 
 
 def parse_price(soup):
@@ -136,7 +142,8 @@ def parse_price(soup):
             price_text = p.text
             break
     prices = [x.replace('.', '') for x in re.findall(r"[\d]+[.]*[\d]+", price_text)[0:2]]
-    return prices[0], prices[1], '0'
+    prices.extend('0')
+    return prices
 
 
 def parse_duration(soup):
@@ -158,15 +165,11 @@ def parse_start_point(soup):
             point_text = p.text
     point_text = point_text.rstrip()
     point_text = re.sub("\s\s+", " ", point_text)
-    if point_text not in added:
-        added.append(point_text)
-        if ':' in point_text:
-            return point_text.split(':')[1].strip(), '0'
-        elif 'Пункт сбора на экскурсии' in point_text:
-            return point_text.split('Пункт сбора на экскурсии')[1].strip(), '0'
-        return point_text, '0'
-    else:
-        return None
+    if ':' in point_text:
+        return point_text.split(':')[1].strip(), '0'
+    elif 'Пункт сбора на экскурсии' in point_text:
+        return point_text.split('Пункт сбора на экскурсии')[1].strip(), '0'
+    return point_text, '0'
 
 
 def parse_description(soup):
@@ -188,5 +191,4 @@ def parse():
 
 
 if __name__ == '__main__':
-    # db.migrate()
     parse()

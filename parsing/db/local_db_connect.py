@@ -1,8 +1,7 @@
 from peewee import *
 from peewee import create_model_tables
 from playhouse.sqlite_ext import SqliteDatabase
-import parsing.settings as s
-import psycopg2
+from parsing import settings as s
 
 DATABASE = s.LOCAL_DB_PATH
 database = SqliteDatabase(DATABASE)
