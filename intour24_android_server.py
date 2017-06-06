@@ -1,8 +1,9 @@
-from flask import Flask, jsonify, url_for, request, json, Response
+from flask import Flask, jsonify, url_for, request, json, Response, Blueprint
 from flask_restful import reqparse, abort
 from nikita_first_python_program import convert
 from apscheduler.schedulers.blocking import BlockingScheduler
 import intour24_database
+
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
@@ -134,7 +135,6 @@ def sight(id):
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
-
 
 @app.route('/sights/')
 def sights():
