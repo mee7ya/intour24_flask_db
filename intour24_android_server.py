@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, url_for, request, json, Response
-from flask_restful import reqparse
+from flask_restful import reqparse, abort
 from nikita_first_python_program import convert
 from apscheduler.schedulers.blocking import BlockingScheduler
 import intour24_database
@@ -34,25 +34,27 @@ def excursion(id):
             'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, ' \
             'pp.name, e.average_rating, c.name'
     rows = db.select_custom_query(table=__table__, query=query);
-    if rows[0][10][0] is None:
-        properties = None
+    if rows:
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: convert(rows[0][3]),
+                         __parameters__[4]: rows[0][4],
+                         __parameters__[5]: rows[0][5],
+                         __parameters__[6]: rows[0][6],
+                         __parameters__[7]: rows[0][7],
+                         __parameters__[8]: rows[0][8],
+                         __parameters__[9]: rows[0][9],
+                         __parameters__[10]: rows[0][10],
+                         __parameters__[11]: rows[0][11]}
+        json_response = json.dumps(json_response)
+        response = Response(json_response, content_type='application/json; charset=utf-8')
+        return response
     else:
-        properties = rows[0][10]
-    json_response = {__parameters__[0]: rows[0][0],
-                     __parameters__[1]: rows[0][1],
-                     __parameters__[2]: rows[0][2],
-                     __parameters__[3]: convert(rows[0][3]),
-                     __parameters__[4]: rows[0][4],
-                     __parameters__[5]: rows[0][5],
-                     __parameters__[6]: rows[0][6],
-                     __parameters__[7]: rows[0][7],
-                     __parameters__[8]: rows[0][8],
-                     __parameters__[9]: rows[0][9],
-                     __parameters__[10]: properties,
-                     __parameters__[11]: rows[0][11]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
+        json_response = {'error': 'wrong input'}
+        json_response = json.dumps(json_response)
+        response = Response(json_response, content_type='application/json; charset=utf-8')
+        return response, 400
 
 
 @app.route('/excursions/')
@@ -101,20 +103,26 @@ def sight(id):
             'ORDER BY s.id;'
     rows = db.select_custom_query(table=__table__, query=query)
     properties = []
-    for i in range(0, len(rows[0][6])):
-        properties.append({'name': rows[0][6][i],
-                           'icon': rows[0][7][i]})
-    json_response = {__parameters__[0]: rows[0][0],
-                     __parameters__[1]: rows[0][1],
-                     __parameters__[2]: rows[0][2],
-                     __parameters__[3]: rows[0][3],
-                     __parameters__[4]: rows[0][4],
-                     __parameters__[5]: rows[0][5],
-                     __parameters__[6]: properties,
-                     __parameters__[7]: rows[0][8]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
+    if rows:
+        for i in range(0, len(rows[0][6])):
+            properties.append({'name': rows[0][6][i],
+                               'icon': rows[0][7][i]})
+        json_response = {__parameters__[0]: rows[0][0],
+                         __parameters__[1]: rows[0][1],
+                         __parameters__[2]: rows[0][2],
+                         __parameters__[3]: rows[0][3],
+                         __parameters__[4]: rows[0][4],
+                         __parameters__[5]: rows[0][5],
+                         __parameters__[6]: properties,
+                         __parameters__[7]: rows[0][8]}
+        json_response = json.dumps(json_response)
+        response = Response(json_response, content_type='application/json; charset=utf-8')
+        return response
+    else:
+        json_response = {'error': 'wrong input'}
+        json_response = json.dumps(json_response)
+        response = Response(json_response, content_type='application/json; charset=utf-8')
+        return response, 400
 
 
 @app.route('/sights/')
@@ -602,7 +610,6 @@ def favicon():
 @app.route('/')
 def ap2():
     return 'api'
-
 
 # @schedule.scheduled_job('cron', day_of_week='mon-sun', hour=2)
 # def scheduled_job():
