@@ -6,7 +6,7 @@ from re import split
 from bs4 import BeautifulSoup
 
 import parsing.db.local_db_connect as db
-from parsing.settings import TourModel
+from parsing.settings import Models
 
 SITE_URL = 'http://kazantravel.ru'
 HOME_URL = 'http://kazantravel.ru/tours/'
@@ -32,7 +32,7 @@ def _parse(url):
 
 def parse_tour(html):
     tour_soup = BeautifulSoup(html, 'html.parser')
-    return parse_dates(tour_soup, parse_title(tour_soup), parse_price(tour_soup))
+    return parse_dates(tour_soup, parse_title(tour_soup), parse_price(tour_soup), parse_description(tour_soup))
 
 
 def parse_title(tour_soup):
@@ -43,7 +43,7 @@ def parse_price(tour_soup):
     return tour_soup.find('span', class_='tour-price-value').text
 
 
-def parse_dates(tour_soup, title, price):
+def parse_dates(tour_soup, title, price, description):
     schedule_soup = tour_soup.find('dl', class_='dl dl-horizontal booking-tour-days')
     weekday_names = [weekday_num(day) for day in schedule_soup.find_all('dt')]
     weekday_params = schedule_soup.find_all('dd')
@@ -57,14 +57,26 @@ def parse_dates(tour_soup, title, price):
                 last_day = datetime.today() + timedelta(days=DAY_THRESHOLD + 1)
                 while day < last_day:
                     if day.weekday() == weekday_names[i] and day_in_period(day, periods[j].text):
-                        tour = TourModel()
+                        tour = Models.Tour()
                         tour.title = title
                         tour.price = price
+                        tour.description = description
                         tour.date = day.strftime('%d.%m')
                         tour.time = times[2 * j].text + '-' + times[2 * j + 1].text
                         tours.append(tour)
                     day += timedelta(days=1)
     return tours
+
+
+def parse_description(tour_soup):
+    descriptions = tour_soup.find('div', class_='col-xs-12 col-sm-7').find_all(['p', 'li'])
+    if descriptions is None:
+        return ''
+    else:
+        result = ''
+        for description in descriptions:
+            result += description.text + '\n'
+        return result
 
 
 def weekday_num(day):
@@ -73,6 +85,7 @@ def weekday_num(day):
     }
     for day in days:
         return days[day]
+
 
 def day_in_period(day, str_period):
     _, str_start_date, str_end_date, _ = split(r'[(]|[)]|[-]', str_period)
@@ -88,5 +101,5 @@ def parse():
 
 
 if __name__ == '__main__':
-    db.migrate()
+    # db.migrate()
     parse()

@@ -1,21 +1,18 @@
 import time
 
 import parsing.db.local_db_connect as db
-from parsing.parsers import kazantravel, tur_kazan
+from parsing.parsers import kazantravel, tur_kazan_tours
 
 if __name__ == '__main__':
     tours = []
-    t = time.time()
-    tours.extend(kazantravel.parse())
-    print(time.time() - t)
-    t = time.time()
-    tours.extend(tur_kazan.parse())
-    print(time.time() - t)
-
     db.migrate()
 
-    print(len(tours))
+    # t = time.time()
+    # tours.extend(kazantravel.parse())
+    # print(time.time() - t)
+
+    t = time.time()
+    tours.extend(tur_kazan_tours.parse())
 
     for tour in tours:
         tour.save()
-    print(time.time() - t)
