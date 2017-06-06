@@ -12,50 +12,55 @@ schedule = BlockingScheduler()
 
 @app.route('/excursion/<id>')
 def excursion(id):
-    __table__ = 'excursions'
-    __parameters__ = ['id', 'name', 'description', 'duration', 'priceForChildren', 'priceForAdult',
-                      'priceForEnfant', 'pickingPlace', 'category', 'rating', 'properties',
-                      'images']
-    query = 'SELECT e.id, e.name, e.description, e.duration, p.price_for_children, p.price_for_adult, ' \
-            'p.price_for_enfant, pp.name, c.name, ' \
-            'e.average_rating, array_agg(ep.name), e.images ' \
-            'FROM excursions e ' \
-            'LEFT JOIN prices p ' \
-            'ON e.price_id = p.id ' \
-            'LEFT JOIN picking_places pp ' \
-            'ON e.picking_place_id = pp.id ' \
-            'LEFT JOIN category c ' \
-            'ON e.category_id = c.id ' \
-            'LEFT JOIN excursions_excursion_property eep ' \
-            'ON e.id = eep.excursion_id ' \
-            'LEFT JOIN excursion_property ep ' \
-            'ON ep.id = eep.excursion_property_id ' \
-            'WHERE e.id =  ' + id + \
-            'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, ' \
-            'pp.name, e.average_rating, c.name'
-    rows = db.select_custom_query(table=__table__, query=query);
-    if rows:
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2],
-                         __parameters__[3]: convert(rows[0][3]),
-                         __parameters__[4]: rows[0][4],
-                         __parameters__[5]: rows[0][5],
-                         __parameters__[6]: rows[0][6],
-                         __parameters__[7]: rows[0][7],
-                         __parameters__[8]: rows[0][8],
-                         __parameters__[9]: rows[0][9],
-                         __parameters__[10]: rows[0][10],
-                         __parameters__[11]: rows[0][11]}
-        json_response = json.dumps(json_response)
-        response = Response(json_response, content_type='application/json; charset=utf-8')
-        return response
+    if id.isdigit():
+        __table__ = 'excursions'
+        __parameters__ = ['id', 'name', 'description', 'duration', 'priceForChildren', 'priceForAdult',
+                          'priceForEnfant', 'pickingPlace', 'category', 'rating', 'properties',
+                          'images']
+        query = 'SELECT e.id, e.name, e.description, e.duration, p.price_for_children, p.price_for_adult, ' \
+                'p.price_for_enfant, pp.name, c.name, ' \
+                'e.average_rating, array_agg(ep.name), e.images ' \
+                'FROM excursions e ' \
+                'LEFT JOIN prices p ' \
+                'ON e.price_id = p.id ' \
+                'LEFT JOIN picking_places pp ' \
+                'ON e.picking_place_id = pp.id ' \
+                'LEFT JOIN category c ' \
+                'ON e.category_id = c.id ' \
+                'LEFT JOIN excursions_excursion_property eep ' \
+                'ON e.id = eep.excursion_id ' \
+                'LEFT JOIN excursion_property ep ' \
+                'ON ep.id = eep.excursion_property_id ' \
+                'WHERE e.id =  ' + id + \
+                'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, ' \
+                'pp.name, e.average_rating, c.name'
+        rows = db.select_custom_query(table=__table__, query=query);
+        if rows:
+            json_response = {__parameters__[0]: rows[0][0],
+                             __parameters__[1]: rows[0][1],
+                             __parameters__[2]: rows[0][2],
+                             __parameters__[3]: convert(rows[0][3]),
+                             __parameters__[4]: rows[0][4],
+                             __parameters__[5]: rows[0][5],
+                             __parameters__[6]: rows[0][6],
+                             __parameters__[7]: rows[0][7],
+                             __parameters__[8]: rows[0][8],
+                             __parameters__[9]: rows[0][9],
+                             __parameters__[10]: rows[0][10],
+                             __parameters__[11]: rows[0][11]}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        else:
+            json_response = {'error': 'wrong input'}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response, 400
     else:
         json_response = {'error': 'wrong input'}
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
-
 
 @app.route('/excursions/')
 def excursions():
@@ -86,38 +91,44 @@ def excursions():
 
 @app.route('/sight/<id>')
 def sight(id):
-    __table__ = 'sights'
-    __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover', 'properties', 'excursions']
-    query = 'SELECT s.*, array_agg(DISTINCT sp.name), array_agg(DISTINCT sp.image), array_agg(DISTINCT e.name) ' \
-            'FROM sights s ' \
-            'LEFT JOIN sights_sight_property ssp ' \
-            'ON s.id = ssp.sight_id ' \
-            'LEFT JOIN sight_property sp ' \
-            'ON ssp.sight_property_id = sp.id ' \
-            'LEFT JOIN excursions_sights es ' \
-            'ON es.sight_id = s.id ' \
-            'LEFT JOIN excursions e ' \
-            'ON e.id = es.excursion_id ' \
-            'WHERE s.id = ' + id + \
-            'GROUP BY s.id ' \
-            'ORDER BY s.id;'
-    rows = db.select_custom_query(table=__table__, query=query)
-    properties = []
-    if rows:
-        for i in range(0, len(rows[0][6])):
-            properties.append({'name': rows[0][6][i],
-                               'icon': rows[0][7][i]})
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2],
-                         __parameters__[3]: rows[0][3],
-                         __parameters__[4]: rows[0][4],
-                         __parameters__[5]: rows[0][5],
-                         __parameters__[6]: properties,
-                         __parameters__[7]: rows[0][8]}
-        json_response = json.dumps(json_response)
-        response = Response(json_response, content_type='application/json; charset=utf-8')
-        return response
+    if id.isdigit():
+        __table__ = 'sights'
+        __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover', 'properties', 'excursions']
+        query = 'SELECT s.*, array_agg(DISTINCT sp.name), array_agg(DISTINCT sp.image), array_agg(DISTINCT e.name) ' \
+                'FROM sights s ' \
+                'LEFT JOIN sights_sight_property ssp ' \
+                'ON s.id = ssp.sight_id ' \
+                'LEFT JOIN sight_property sp ' \
+                'ON ssp.sight_property_id = sp.id ' \
+                'LEFT JOIN excursions_sights es ' \
+                'ON es.sight_id = s.id ' \
+                'LEFT JOIN excursions e ' \
+                'ON e.id = es.excursion_id ' \
+                'WHERE s.id = ' + id + \
+                'GROUP BY s.id ' \
+                'ORDER BY s.id;'
+        rows = db.select_custom_query(table=__table__, query=query)
+        properties = []
+        if rows:
+            for i in range(0, len(rows[0][6])):
+                properties.append({'name': rows[0][6][i],
+                                   'icon': rows[0][7][i]})
+            json_response = {__parameters__[0]: rows[0][0],
+                             __parameters__[1]: rows[0][1],
+                             __parameters__[2]: rows[0][2],
+                             __parameters__[3]: rows[0][3],
+                             __parameters__[4]: rows[0][4],
+                             __parameters__[5]: rows[0][5],
+                             __parameters__[6]: properties,
+                             __parameters__[7]: rows[0][8]}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        else:
+            json_response = {'error': 'wrong input'}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response, 400
     else:
         json_response = {'error': 'wrong input'}
         json_response = json.dumps(json_response)
@@ -129,7 +140,6 @@ def sight(id):
 def sights():
     __table__ = 'sights'
     __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover', 'minPrice', 'maxPrice']
-    c_id = request.args.get('id')
     query = 'SELECT s.*, array_agg(p.price_for_adult) ' \
             'FROM sights s ' \
             'LEFT JOIN excursions_sights es ' \
@@ -292,32 +302,100 @@ def schedule():
     return response
 
 
-@app.route('/groups')
+@app.route('/group/<id>')
+def group(id):
+    if id.isdigit():
+        __table__ = 'groups'
+        __parameters_group__ = ['id', 'tour_date', 'seats_reserved', 'guide_id', 'seats_capacity', 'excursion']
+        __parameters_excursion__ = ['id', 'name', 'description', 'capacity', 'average_rating', 'duration', 'linkToSite',
+                                    'images', 'category', 'picking_place', 'price', 'properties']
+        __parameters_category__ = ['id', 'name']
+        __parameters_picking_place__ = ['id', 'name', 'geoposition']
+        __parameters_price__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
+        __parameters_properties__ = ['id', 'name', 'image']
+        query = 'SELECT g.id, g.tour_date, g.seats_reserved, g.guide_id, g.seats_capacity, e.id, e.name, e.description, ' \
+                'e.capacity, e.average_rating, e.duration, e.link_to_site, e.images,' \
+                'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.image) ' \
+                'FROM groups g ' \
+                'LEFT JOIN excursions e ' \
+                'ON g.excursion_id = e.id ' \
+                'LEFT JOIN category c ' \
+                'ON e.category_id = c.id ' \
+                'LEFT JOIN prices p ' \
+                'ON e.price_id = p.id ' \
+                'LEFT JOIN picking_places pp ' \
+                'ON e.picking_place_id = pp.id ' \
+                'LEFT JOIN excursions_excursion_property eep ' \
+                'ON eep.excursion_id = e.id ' \
+                'LEFT JOIN excursion_property ep ' \
+                'ON ep.id = eep.excursion_property_id ' \
+                'WHERE g.id = '+id+ \
+                'GROUP BY g.id, e.id, c.id, p.id, pp.id ' \
+                'ORDER BY g.id;'
+        rows = db.select_custom_query(table=__table__, query=query)
+        json_response = []
+        if rows:
+            for row in rows:
+                json_category = {__parameters_category__[0]: row[13],
+                                 __parameters_category__[1]: row[14]}
+                json_price = {__parameters_price__[0]: row[15],
+                              __parameters_price__[1]: row[16],
+                              __parameters_price__[2]: row[17],
+                              __parameters_price__[3]: row[18]}
+                json_picking_place = {__parameters_picking_place__[0]: row[19],
+                                      __parameters_picking_place__[1]: row[20],
+                                      __parameters_picking_place__[2]: row[21]}
+                json_properties = []
+                for i in range(len(row[22])):
+                    json_properties.append({__parameters_properties__[0]: row[22][i],
+                                            __parameters_properties__[1]: row[23][i],
+                                            __parameters_properties__[2]: row[24][i]})
+                json_excursion = {__parameters_excursion__[0]: row[5],
+                                  __parameters_excursion__[1]: row[6],
+                                  __parameters_excursion__[2]: row[7],
+                                  __parameters_excursion__[3]: row[8],
+                                  __parameters_excursion__[4]: row[9],
+                                  __parameters_excursion__[5]: row[10],
+                                  __parameters_excursion__[6]: row[11],
+                                  __parameters_excursion__[7]: row[12],
+                                  __parameters_excursion__[8]: json_category,
+                                  __parameters_excursion__[9]: json_picking_place,
+                                  __parameters_excursion__[10]: json_price,
+                                  __parameters_excursion__[11]: json_properties}
+                json_response.append({__parameters_group__[0]: row[0],
+                                      __parameters_group__[1]: row[1],
+                                      __parameters_group__[2]: row[2],
+                                      __parameters_group__[3]: row[3],
+                                      __parameters_group__[4]: row[4],
+                                      __parameters_group__[5]: json_excursion,
+                                      })
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        else:
+            json_response = {'error': 'wrong input'}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response, 400
+    else:
+        json_response = {'error': 'wrong input'}
+        json_response = json.dumps(json_response)
+        response = Response(json_response, content_type='application/json; charset=utf-8')
+        return response, 400
+
+@app.route('/groups/')
 def groups():
     __table__ = 'groups'
     __parameters__ = ['id', 'tour_date', 'seats_reserved', 'excursions_id', 'guide_id',
                       'seats_capacity']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2],
-                                  __parameters__[3]: row[3],
-                                  __parameters__[4]: row[4],
-                                  __parameters__[5]: row[5],
-                                  })
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
+    rows = db.select_query_with_id(table=__table__)
+    for row in rows:
         json_response = {__parameters__[0]: rows[0][0],
                          __parameters__[1]: rows[0][1],
                          __parameters__[2]: rows[0][2],
                          __parameters__[3]: rows[0][3],
                          __parameters__[4]: rows[0][4],
                          __parameters__[5]: rows[0][5]}
-
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
