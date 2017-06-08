@@ -304,9 +304,8 @@ def schedule():
     return response
 
 
-@app.route('/groups')
-def groups():
-    date = request.args.get("date")
+@app.route('/groups/<date>')
+def groups(date):
 
     __table__ = 'groups'
     __parameters_group__ = ['id', 'tour_date', 'seats_reserved', 'guide_id', 'seats_capacity', 'excursion']
