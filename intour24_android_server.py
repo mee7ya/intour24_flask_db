@@ -683,28 +683,98 @@ def bookings(tourist_id):
                     "GROUP BY b.id, p.id, pp.id, g.id, e.id " \
                     "ORDER BY b.id "
             rows = db.select_custom_query(query)
-            json_response = []
-            for row in rows:
-                json_picking_place = {__parameters_picking_place__[0]: row[6],
-                                      __parameters_picking_place__[1]: row[7]}
-                json_group = {__parameters_group__[0]: row[8],
-                              __parameters_group__[1]: row[9]}
-                json_excursion = {__parameters_excursion__[0]: row[3],
-                                  __parameters_excursion__[1]: row[4],
-                                  __parameters_excursion__[2]: json_picking_place,
-                                  __parameters_excursion__[3]: row[5]}
-                json_response.append({__parameters_booking__[0]: row[0],
-                                      __parameters_booking__[1]: json_excursion,
-                                      __parameters_booking__[2]: row[1],
-                                      __parameters_booking__[3]: row[2],
-                                      __parameters_booking__[4]: json_group})
-            json_response = json.dumps(json_response)
-            response = Response(json_response, content_type='application/json; charset=utf-8')
-            return response
+            if rows:
+                json_response = []
+                for row in rows:
+                    json_picking_place = {__parameters_picking_place__[0]: row[6],
+                                          __parameters_picking_place__[1]: row[7]}
+                    json_group = {__parameters_group__[0]: row[8],
+                                  __parameters_group__[1]: row[9]}
+                    json_excursion = {__parameters_excursion__[0]: row[3],
+                                      __parameters_excursion__[1]: row[4],
+                                      __parameters_excursion__[2]: json_picking_place,
+                                      __parameters_excursion__[3]: row[5]}
+                    json_response.append({__parameters_booking__[0]: row[0],
+                                          __parameters_booking__[1]: json_excursion,
+                                          __parameters_booking__[2]: row[1],
+                                          __parameters_booking__[3]: row[2],
+                                          __parameters_booking__[4]: json_group})
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response
     json_response = {'error': 3}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
+
+
+@app.route('/booking/<id>')
+def booking(id):
+    if id is not None:
+        if id.isdigit():
+            __parameters__ = ['id', 'adults', 'children', 'enfants', 'total_price', 'group']
+            __parameters_group__ = ['id', 'tour_date', 'excursion']
+            __parameters_excursion__ = ['id', 'name', 'duration', 'operator', 'picking_place', 'properties']
+            __parameters_picking_place__ = ['id', 'name', 'geoposition']
+            __parameters_properties__ = ['id', 'name', 'icon']
+            __parameters_operator__ = ['id', 'name', 'logo']
+            query = 'SELECT b.id, b.adults, b.children, b.enfants, b.total_price, g.id, g.tour_date, e.id, e.name, ' \
+                    'e.duration, o.id, o.name, o.logo, pp.id, pp.name, pp.geoposition, ' \
+                    'array_agg(ep.id), array_agg(ep.name), array_agg(ep.image) ' \
+                    'FROM bookings b ' \
+                    'LEFT JOIN groups g ' \
+                    'ON g.id = b.group_id ' \
+                    'LEFT JOIN excursions e ' \
+                    'ON g.excursion_id = e.id ' \
+                    'LEFT JOIN operator o ' \
+                    'ON e.operator_id = o.id ' \
+                    'LEFT JOIN picking_places pp ' \
+                    'ON e.picking_place_id = pp.id ' \
+                    'LEFT JOIN excursions_excursion_property eep ' \
+                    'ON eep.excursion_id = e.id ' \
+                    'LEFT JOIN excursion_property ep ' \
+                    'ON eep.excursion_property_id = ep.id ' \
+                    'WHERE b.id = ' + id + \
+                    'GROUP BY b.id, g.id, e.id, o.id, pp.id ' \
+                    'ORDER BY b.id '
+            rows = db.select_custom_query(query)
+            if rows:
+                row = rows[0]
+                json_properties = []
+                for i in range(len(row[16])):
+                    json_properties.append({__parameters_properties__[0]: row[16][i],
+                                            __parameters_properties__[1]: row[17][i],
+                                            __parameters_properties__[2]: row[18][i]})
+                json_operator = {__parameters_operator__[0]: row[10],
+                                 __parameters_operator__[1]: row[11],
+                                 __parameters_operator__[2]: row[12]}
+                json_picking_place = {__parameters_picking_place__[0]: row[13],
+                                      __parameters_picking_place__[1]: row[14],
+                                      __parameters_picking_place__[2]: row[15]}
+                json_excursion = {__parameters_excursion__[0]: row[7],
+                                  __parameters_excursion__[1]: row[8],
+                                  __parameters_excursion__[2]: convert(row[9]),
+                                  __parameters_excursion__[3]: json_operator,
+                                  __parameters_excursion__[4]: json_picking_place,
+                                  __parameters_excursion__[5]: json_properties}
+                json_group = {__parameters_group__[0]: row[5],
+                              __parameters_group__[1]: row[6],
+                              __parameters_group__[2]: json_excursion}
+                json_response = {__parameters__[0]: row[0],
+                                 __parameters__[1]: row[1],
+                                 __parameters__[2]: row[2],
+                                 __parameters__[3]: row[3],
+                                 __parameters__[4]: row[4],
+                                 __parameters__[5]: json_group}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response
+    json_response = {'error': 3}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response, 400
+
+
 
 
 @app.route('/payments/', methods=['POST'])
