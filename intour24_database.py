@@ -50,8 +50,8 @@ class Database:
         cursor.execute(query)
         return cursor.fetchall()
 
-    def update_custom_query(self, query):
+    def update_insert_custom_query(self, query):
         cursor = self.db.cursor()
         cursor.execute(query)
         self.db.commit()
-        cursor.close()
+        return cursor.fetchone()[0]
