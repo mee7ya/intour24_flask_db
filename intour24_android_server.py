@@ -342,12 +342,12 @@ def groups(date, sight_id):
     __table__ = 'groups'
     __parameters_group__ = ['id', 'tour_date', 'seats_reserved', 'guide_id', 'seats_capacity', 'excursion']
     __parameters_excursion__ = ['id', 'name', 'description', 'capacity', 'average_rating', 'duration', 'linkToSite',
-                                'images', 'category', 'picking_place', 'price', 'properties']
+                                'images', 'category', 'picking_place', 'price', 'properties', 'sight']
     __parameters_category__ = ['id', 'name']
     __parameters_picking_place__ = ['id', 'name', 'geoposition']
     __parameters_price__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
     __parameters_properties__ = ['id', 'name', 'image']
-    __parameters_sight__ = ['id', 'name', 'groups']
+    __parameters_sight__ = ['id', 'name']
     incorrect_input = True
     if date is not None and sight_id is not None:
         try:
@@ -403,6 +403,8 @@ def groups(date, sight_id):
                     json_properties.append({__parameters_properties__[0]: row[22][i],
                                             __parameters_properties__[1]: row[23][i],
                                             __parameters_properties__[2]: row[24][i]})
+                json_sight = {__parameters_sight__[0]: row[25],
+                              __parameters_sight__[1]: row[26]}
                 json_excursion = {__parameters_excursion__[0]: row[5],
                                   __parameters_excursion__[1]: row[6],
                                   __parameters_excursion__[2]: row[7],
@@ -414,7 +416,8 @@ def groups(date, sight_id):
                                   __parameters_excursion__[8]: json_category,
                                   __parameters_excursion__[9]: json_picking_place,
                                   __parameters_excursion__[10]: json_price,
-                                  __parameters_excursion__[11]: json_properties}
+                                  __parameters_excursion__[11]: json_properties,
+                                  __parameters_excursion__[12]: json_sight}
                 json_response.append({__parameters_group__[0]: row[0],
                                       __parameters_group__[1]: row[1],
                                       __parameters_group__[2]: row[2],
@@ -422,11 +425,8 @@ def groups(date, sight_id):
                                       __parameters_group__[4]: row[4],
                                       __parameters_group__[5]: json_excursion,
                                       })
-            json_sight = {__parameters_sight__[0]: rows[0][25],
-                          __parameters_sight__[1]: rows[0][26],
-                          __parameters_sight__[2]: json_response}
-            json_sight = json.dumps(json_sight)
-            response = Response(json_sight, content_type='application/json; charset=utf-8')
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
         else:
             json_response = {'error': 'wrong input'}
