@@ -337,8 +337,8 @@ def groups_upd():
     return response, 400
 
 
-@app.route('/groups/<date>')
-def groups(date):
+@app.route('/groups/<date>/sight/<sight_id>')
+def groups(date, sight_id):
     __table__ = 'groups'
     __parameters_group__ = ['id', 'tour_date', 'seats_reserved', 'guide_id', 'seats_capacity', 'excursion']
     __parameters_excursion__ = ['id', 'name', 'description', 'capacity', 'average_rating', 'duration', 'linkToSite',
@@ -347,19 +347,24 @@ def groups(date):
     __parameters_picking_place__ = ['id', 'name', 'geoposition']
     __parameters_price__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
     __parameters_properties__ = ['id', 'name', 'image']
-    if date is not None :
+    __parameters_sight__ = ['id', 'name', 'groups']
+    incorrect_input = True
+    if date is not None and sight_id is not None:
         try:
             datetime.datetime.strptime(date, '%Y-%m-%d')
-            incorrect_input = False
+            if sight_id.isdigit():
+                incorrect_input = False
+            else:
+                raise ValueError('id is not digit')
         except ValueError:
             incorrect_input = True
-        where_clause = "WHERE g.tour_date::date = '"+date+"'"
+        where_clause = "WHERE g.tour_date::date = '"+date+"' AND s.id = "+sight_id
     else:
         where_clause = ''
     if not incorrect_input:
         query = 'SELECT g.id, g.tour_date, g.seats_reserved, g.guide_id, g.seats_capacity, e.id, e.name, e.description, ' \
-                'e.capacity, e.average_rating, e.duration, e.link_to_site, e.images,' \
-                'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.image) ' \
+                'e.capacity, e.average_rating, e.duration, e.link_to_site, e.images, ' \
+                'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.image), s.id, s.name ' \
                 'FROM groups g ' \
                 'LEFT JOIN excursions e ' \
                 'ON g.excursion_id = e.id ' \
@@ -373,8 +378,12 @@ def groups(date):
                 'ON eep.excursion_id = e.id ' \
                 'LEFT JOIN excursion_property ep ' \
                 'ON ep.id = eep.excursion_property_id ' \
+                'LEFT JOIN excursions_sights es ' \
+                'ON es.excursion_id = e.id ' \
+                'LEFT JOIN sights s ' \
+                'ON s.id = es.sight_id ' \
                 '' + where_clause + \
-                'GROUP BY g.id, e.id, c.id, p.id, pp.id ' \
+                'GROUP BY g.id, e.id, c.id, p.id, pp.id, s.id ' \
                 'ORDER BY g.id;'
         rows = db.select_custom_query(query=query)
         json_response = []
@@ -413,8 +422,11 @@ def groups(date):
                                       __parameters_group__[4]: row[4],
                                       __parameters_group__[5]: json_excursion,
                                       })
-            json_response = json.dumps(json_response)
-            response = Response(json_response, content_type='application/json; charset=utf-8')
+            json_sight = {__parameters_sight__[0]: rows[0][25],
+                          __parameters_sight__[1]: rows[0][26],
+                          __parameters_sight__[2]: json_response}
+            json_sight = json.dumps(json_sight)
+            response = Response(json_sight, content_type='application/json; charset=utf-8')
             return response
         else:
             json_response = {'error': 'wrong input'}
