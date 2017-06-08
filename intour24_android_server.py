@@ -1,7 +1,7 @@
-from flask import Flask, jsonify, url_for, request, json, Response, Blueprint
-from flask_restful import reqparse, abort
+from flask import Flask, url_for, request, json, Response
 from nikita_first_python_program import convert
 from apscheduler.schedulers.blocking import BlockingScheduler
+import datetime
 import intour24_database
 
 
@@ -62,6 +62,7 @@ def excursion(id):
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
+
 
 @app.route('/excursions/')
 def excursions():
@@ -135,6 +136,7 @@ def sight(id):
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
+
 
 @app.route('/sights/')
 def sights():
@@ -302,17 +304,28 @@ def schedule():
     return response
 
 
-@app.route('/group/<id>')
-def group(id):
-    if id.isdigit():
-        __table__ = 'groups'
-        __parameters_group__ = ['id', 'tour_date', 'seats_reserved', 'guide_id', 'seats_capacity', 'excursion']
-        __parameters_excursion__ = ['id', 'name', 'description', 'capacity', 'average_rating', 'duration', 'linkToSite',
-                                    'images', 'category', 'picking_place', 'price', 'properties']
-        __parameters_category__ = ['id', 'name']
-        __parameters_picking_place__ = ['id', 'name', 'geoposition']
-        __parameters_price__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
-        __parameters_properties__ = ['id', 'name', 'image']
+@app.route('/groups')
+def groups():
+    date = request.args.get("date")
+
+    __table__ = 'groups'
+    __parameters_group__ = ['id', 'tour_date', 'seats_reserved', 'guide_id', 'seats_capacity', 'excursion']
+    __parameters_excursion__ = ['id', 'name', 'description', 'capacity', 'average_rating', 'duration', 'linkToSite',
+                                'images', 'category', 'picking_place', 'price', 'properties']
+    __parameters_category__ = ['id', 'name']
+    __parameters_picking_place__ = ['id', 'name', 'geoposition']
+    __parameters_price__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
+    __parameters_properties__ = ['id', 'name', 'image']
+    if date is not None:
+        try:
+            datetime.datetime.strptime(date, '%Y-%m-%d')
+            incorrect_input = False
+        except ValueError:
+            incorrect_input = True
+        where_clause = "WHERE g.tour_date::date = '"+date+"'"
+    else:
+        where_clause = ''
+    if not incorrect_input:
         query = 'SELECT g.id, g.tour_date, g.seats_reserved, g.guide_id, g.seats_capacity, e.id, e.name, e.description, ' \
                 'e.capacity, e.average_rating, e.duration, e.link_to_site, e.images,' \
                 'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.image) ' \
@@ -329,7 +342,7 @@ def group(id):
                 'ON eep.excursion_id = e.id ' \
                 'LEFT JOIN excursion_property ep ' \
                 'ON ep.id = eep.excursion_property_id ' \
-                'WHERE g.id = '+id+ \
+                '' + where_clause + \
                 'GROUP BY g.id, e.id, c.id, p.id, pp.id ' \
                 'ORDER BY g.id;'
         rows = db.select_custom_query(table=__table__, query=query)
@@ -383,23 +396,24 @@ def group(id):
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
 
-@app.route('/groups/')
-def groups():
-    __table__ = 'groups'
-    __parameters__ = ['id', 'tour_date', 'seats_reserved', 'excursions_id', 'guide_id',
-                      'seats_capacity']
-    rows = db.select_query(table=__table__)
-    json_response = []
-    for row in rows:
-        json_response.append({__parameters__[0]: row[0],
-                         __parameters__[1]: row[1],
-                         __parameters__[2]: row[2],
-                         __parameters__[3]: row[3],
-                         __parameters__[4]: row[4],
-                         __parameters__[5]: row[5]})
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
+
+# @app.route('/groups/')
+# def groups():
+#     __table__ = 'groups'
+#     __parameters__ = ['id', 'tour_date', 'seats_reserved', 'excursions_id', 'guide_id',
+#                       'seats_capacity']
+#     rows = db.select_query(table=__table__)
+#     json_response = []
+#     for row in rows:
+#         json_response.append({__parameters__[0]: row[0],
+#                          __parameters__[1]: row[1],
+#                          __parameters__[2]: row[2],
+#                          __parameters__[3]: row[3],
+#                          __parameters__[4]: row[4],
+#                          __parameters__[5]: row[5]})
+#     json_response = json.dumps(json_response)
+#     response = Response(json_response, content_type='application/json; charset=utf-8')
+#     return response
 
 
 @app.route('/prices')
