@@ -35,7 +35,7 @@ def excursion(id):
                 'WHERE e.id =  ' + id + \
                 'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, ' \
                 'pp.name, e.average_rating, c.name'
-        rows = db.select_custom_query(table=__table__, query=query);
+        rows = db.select_custom_query(query=query);
         if rows:
             json_response = {__parameters__[0]: rows[0][0],
                              __parameters__[1]: rows[0][1],
@@ -109,7 +109,7 @@ def sight(id):
                 'WHERE s.id = ' + id + \
                 'GROUP BY s.id ' \
                 'ORDER BY s.id;'
-        rows = db.select_custom_query(table=__table__, query=query)
+        rows = db.select_custom_query(query=query)
         properties = []
         if rows:
             for i in range(0, len(rows[0][6])):
@@ -152,7 +152,7 @@ def sights():
             'ON e.price_id = p.id ' \
             'GROUP BY s.id ' \
             'ORDER BY s.id;'
-    rows = db.select_custom_query(table=__table__, query=query)
+    rows = db.select_custom_query(query=query)
     json_response = []
     for row in rows:
         if row[6][0] is None:
@@ -304,9 +304,41 @@ def schedule():
     return response
 
 
+@app.route('/groups/', methods=['POST'])
+def groups_upd():
+    request.accept_mimetypes.best_match(['application/x-www-form-urlencoded'])
+    group_id = request.form['group_id']
+    seats_reserved = request.form['seats_reserved']
+    if not (group_id is None or seats_reserved is None):
+        __table__ = 'groups'
+        query = 'SELECT seats_reserved, seats_capacity ' \
+                'FROM groups ' \
+                'WHERE id= ' + group_id
+        rows = db.select_custom_query(query)
+        row = rows[0]
+        more_seats_reserved = int(row[0])+int(seats_reserved)
+        if more_seats_reserved <= row[1]:
+            query = 'UPDATE groups SET seats_reserved = '+str(more_seats_reserved)+' WHERE id = '+group_id
+            db.update_custom_query(query)
+            json_response = {'group_id': int(group_id),
+                             'seats_reserved': more_seats_reserved}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        else:
+            json_response = {'error': 1}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+    else:
+        json_response = {'error': 3}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response, 400
+
+
 @app.route('/groups/<date>')
 def groups(date):
-
     __table__ = 'groups'
     __parameters_group__ = ['id', 'tour_date', 'seats_reserved', 'guide_id', 'seats_capacity', 'excursion']
     __parameters_excursion__ = ['id', 'name', 'description', 'capacity', 'average_rating', 'duration', 'linkToSite',
@@ -315,7 +347,7 @@ def groups(date):
     __parameters_picking_place__ = ['id', 'name', 'geoposition']
     __parameters_price__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
     __parameters_properties__ = ['id', 'name', 'image']
-    if date is not None:
+    if date is not None :
         try:
             datetime.datetime.strptime(date, '%Y-%m-%d')
             incorrect_input = False
@@ -344,7 +376,7 @@ def groups(date):
                 '' + where_clause + \
                 'GROUP BY g.id, e.id, c.id, p.id, pp.id ' \
                 'ORDER BY g.id;'
-        rows = db.select_custom_query(table=__table__, query=query)
+        rows = db.select_custom_query(query=query)
         json_response = []
         if rows:
             for row in rows:
@@ -367,7 +399,7 @@ def groups(date):
                                   __parameters_excursion__[2]: row[7],
                                   __parameters_excursion__[3]: row[8],
                                   __parameters_excursion__[4]: row[9],
-                                  __parameters_excursion__[5]: row[10],
+                                  __parameters_excursion__[5]: convert(row[10]),
                                   __parameters_excursion__[6]: row[11],
                                   __parameters_excursion__[7]: row[12],
                                   __parameters_excursion__[8]: json_category,
@@ -397,7 +429,7 @@ def groups(date):
 
 
 # @app.route('/groups/')
-# def groups():
+# def groupsAll():
 #     __table__ = 'groups'
 #     __parameters__ = ['id', 'tour_date', 'seats_reserved', 'excursions_id', 'guide_id',
 #                       'seats_capacity']
@@ -413,31 +445,31 @@ def groups(date):
 #     json_response = json.dumps(json_response)
 #     response = Response(json_response, content_type='application/json; charset=utf-8')
 #     return response
-
-
-@app.route('/prices')
-def prices():
-    __table__ = 'prices'
-    __parameters__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2],
-                                  __parameters__[3]: row[3]
-                                  })
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2],
-                         __parameters__[3]: rows[0][3]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
+#
+#
+# @app.route('/prices')
+# def prices():
+#     __table__ = 'prices'
+#     __parameters__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
+#     c_id = request.args.get('id')
+#     if c_id is None:
+#         rows = db.select_query(table=__table__)
+#         json_response = []
+#         for row in rows:
+#             json_response.append({__parameters__[0]: row[0],
+#                                   __parameters__[1]: row[1],
+#                                   __parameters__[2]: row[2],
+#                                   __parameters__[3]: row[3]
+#                                   })
+#     else:
+#         rows = db.select_query_with_id(table=__table__, c_id=c_id)
+#         json_response = {__parameters__[0]: rows[0][0],
+#                          __parameters__[1]: rows[0][1],
+#                          __parameters__[2]: rows[0][2],
+#                          __parameters__[3]: rows[0][3]}
+#     json_response = json.dumps(json_response)
+#     response = Response(json_response, content_type='application/json; charset=utf-8')
+#     return response
 
 
 @app.route('/excursion_property')

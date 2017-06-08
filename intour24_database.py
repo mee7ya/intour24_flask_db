@@ -45,7 +45,13 @@ class Database:
         cursor.execute(query)
         return cursor.fetchall()
 
-    def select_custom_query(self, table, query):
+    def select_custom_query(self, query):
         cursor = self.db.cursor()
         cursor.execute(query)
         return cursor.fetchall()
+
+    def update_custom_query(self, query):
+        cursor = self.db.cursor()
+        cursor.execute(query)
+        self.db.commit()
+        cursor.close()
