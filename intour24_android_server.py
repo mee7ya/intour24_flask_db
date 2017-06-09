@@ -948,6 +948,56 @@ def registration():
     return response, 400
 
 
+@app.route('/updateTourist', methods=['POST'])
+def update_tourist():
+    c_id = request.form.get('id')
+    name = request.form.get('name')
+    phone = request.form.get('phone')
+    if c_id is not None and name is not None and phone is not None:
+        if c_id.isdigit() and phone.isdigit():
+            query = "UPDATE tourists SET first_name = '"+name+"', phone = '"+phone+"' WHERE id="+c_id+"RETURNING id;"
+            c_id = db.update_insert_custom_query_if_not_exists(query)
+            if c_id is not None:
+                json_response = {"id": c_id[0],
+                                 "status": "OK"}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response
+            else:
+                json_response = {'status': "ERROR",
+                                 'error': 1}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response
+    json_response = {'status': "ERROR",
+                     'error': 2}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response, 400
+
+
+@app.route('/cancelPayment', methods=['DELETE'])
+def cancel_payment():
+    booking_id = request.form.get('booking_id')
+    if booking_id is not None:
+        if booking_id.isdigit():
+            query = 'DELETE FROM payments WHERE booking_id = '+booking_id+'RETURNING id'
+            payment_id = db.update_insert_custom_query_if_not_exists(query)
+            if payment_id is not None:
+                query = 'DELETE FROM bookings WHERE id = '+booking_id+'RETURNING id'
+                booking_id = db.update_insert_custom_query_if_not_exists(query)
+                json_response = {"payment_id": payment_id[0],
+                                "booking_id": booking_id[0],
+                                "status": "OK"}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response
+    json_response = {'status': 'ERROR',
+                     'error': 2}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response, 400
+
 @app.route('/favicon.ico')
 def favicon():
     return url_for('static', filename='favicon.ico')
