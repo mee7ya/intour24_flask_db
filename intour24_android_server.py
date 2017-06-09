@@ -96,16 +96,12 @@ def sight(id):
     if id.isdigit():
         __table__ = 'sights'
         __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover', 'properties', 'excursions']
-        query = 'SELECT s.*, array_agg(DISTINCT sp.name), array_agg(DISTINCT sp.image), array_agg(DISTINCT e.name) ' \
+        query = 'SELECT s.*, array_agg(DISTINCT sp.name), array_agg(DISTINCT sp.image) ' \
                 'FROM sights s ' \
                 'LEFT JOIN sights_sight_property ssp ' \
                 'ON s.id = ssp.sight_id ' \
                 'LEFT JOIN sight_property sp ' \
                 'ON ssp.sight_property_id = sp.id ' \
-                'LEFT JOIN excursions_sights es ' \
-                'ON es.sight_id = s.id ' \
-                'LEFT JOIN excursions e ' \
-                'ON e.id = es.excursion_id ' \
                 'WHERE s.id = ' + id + \
                 'GROUP BY s.id ' \
                 'ORDER BY s.id;'
@@ -121,8 +117,7 @@ def sight(id):
                              __parameters__[3]: rows[0][3],
                              __parameters__[4]: rows[0][4],
                              __parameters__[5]: rows[0][5],
-                             __parameters__[6]: properties,
-                             __parameters__[7]: rows[0][8]}
+                             __parameters__[6]: properties}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
@@ -951,6 +946,7 @@ def registration():
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
+
 
 @app.route('/favicon.ico')
 def favicon():
