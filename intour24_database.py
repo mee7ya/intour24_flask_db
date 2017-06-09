@@ -55,3 +55,9 @@ class Database:
         cursor.execute(query)
         self.db.commit()
         return cursor.fetchone()[0]
+
+    def update_insert_custom_query_if_not_exists(self, query):
+        cursor = self.db.cursor()
+        cursor.execute(query)
+        self.db.commit()
+        return cursor.fetchone()

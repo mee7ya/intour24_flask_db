@@ -775,8 +775,6 @@ def booking(id):
     return response, 400
 
 
-
-
 @app.route('/payments/', methods=['POST'])
 def paymentsAdd():
     booking_id = request.form.get('booking_id')
@@ -811,6 +809,7 @@ def paymentsAdd():
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
+
 
 @app.route('/tourists')
 def tourists():
@@ -907,6 +906,51 @@ def sights_sight_property():
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
 
+
+@app.route('/checkPhone', methods=['POST'])
+def check_phone():
+    phone = request.form.get('phone')
+    if phone is not None:
+        if phone.isdigit():
+            query = "SELECT id FROM tourists WHERE phone='"+phone+"' "
+            rows = db.select_custom_query(query)
+            if rows:
+                json_response = {"registered": "true"}
+            else:
+                json_response = {"registered": "false"}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+    json_response = {'error': 3}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response, 400
+
+
+@app.route('/registration', methods=['POST'])
+def registration():
+    name = request.form.get('name')
+    phone = request.form.get('phone')
+    if name is not None and phone is not None:
+        if phone.isdigit():
+            query = "INSERT INTO tourists (first_name, phone) " \
+                    "SELECT '"+name+"', '"+phone+"' " \
+                    "WHERE NOT EXISTS (SELECT id FROM tourists WHERE phone = '"+phone+"')" \
+                    "RETURNING id;"
+            c_id = db.update_insert_custom_query_if_not_exists(query)
+            if c_id is not None:
+                json_response = {"status": "OK"}
+            else:
+                json_response = {"status": "ERROR",
+                                 "error": 1}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+
+    json_response = {'error': 3}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response, 400
 
 @app.route('/favicon.ico')
 def favicon():
