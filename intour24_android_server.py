@@ -336,7 +336,7 @@ def groups_upd():
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
     else:
-        json_response = {'error': 3}
+        json_response = {'error': 2}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
@@ -434,12 +434,12 @@ def groups(date, sight_id):
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
         else:
-            json_response = {'error': 'wrong input'}
+            json_response = {'error': '1'}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response, 400
     else:
-        json_response = {'error': 'wrong input'}
+        json_response = {'error': '1'}
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
@@ -645,12 +645,12 @@ def bookingsAdd():
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
         else:
-            json_response = {'error': 3}
+            json_response = {'error': 1}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response, 400
     else:
-        json_response = {'error': 3}
+        json_response = {'error': 1}
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
@@ -764,7 +764,12 @@ def booking(id):
                 json_response = json.dumps(json_response)
                 response = Response(json_response, content_type='application/json; charset=utf-8')
                 return response
-    json_response = {'error': 3}
+            else:
+                json_response = {'error': 2}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response, 400
+    json_response = {'error': 1}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
@@ -916,7 +921,7 @@ def check_phone():
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
-    json_response = {'error': 3}
+    json_response = {'error': 1}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
@@ -942,7 +947,7 @@ def registration():
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
 
-    json_response = {'error': 3}
+    json_response = {'error': 2}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
@@ -992,11 +997,17 @@ def cancel_payment():
                 json_response = json.dumps(json_response)
                 response = Response(json_response, content_type='application/json; charset=utf-8')
                 return response
+            json_response = {'status': 'ERROR',
+                             'error': 1}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response, 400
     json_response = {'status': 'ERROR',
                      'error': 2}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
+
 
 @app.route('/favicon.ico')
 def favicon():
