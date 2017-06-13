@@ -170,13 +170,13 @@ def sights():
                                     __parameters_properties__[2]: row[9][i]})
         json_response.append({__parameters__[0]: row[0],
                               __parameters__[1]: row[1],
-                              # __parameters__[2]: row[2],
+                              __parameters__[2]: row[2],
                               __parameters__[3]: row[3],
-                              # __parameters__[4]: row[4],
-                              # __parameters__[5]: row[5],
+                              __parameters__[4]: row[4],
+                              __parameters__[5]: row[5],
                               __parameters__[6]: min_value,
                               __parameters__[7]: max_value,
-                              # __parameters__[8]: json_properties
+                              __parameters__[8]: json_properties
                               })
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
