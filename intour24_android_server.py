@@ -53,12 +53,14 @@ def excursion(id):
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
         else:
-            json_response = {'error': 'wrong input'}
+            json_response = {'status': "ERROR",
+                             'error': '1'}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response, 400
     else:
-        json_response = {'error': 'wrong input'}
+        json_response = {'status': "ERROR",
+                         'error': '1'}
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
@@ -325,18 +327,21 @@ def groups_upd():
         if more_seats_reserved <= row[1]:
             query = 'UPDATE groups SET seats_reserved = '+str(more_seats_reserved)+' WHERE id = '+group_id+' RETURNING id;'
             db.update_insert_custom_query(query)
-            json_response = {'group_id': int(group_id),
+            json_response = {'status': "OK",
+                             'group_id': int(group_id),
                              'seats_reserved': more_seats_reserved}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
         else:
-            json_response = {'error': 1}
+            json_response = {'status': "ERROR",
+                             'error': 1}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
-            return response
+            return response, 400
     else:
-        json_response = {'error': 2}
+        json_response = {'status': "ERROR",
+                         'error': 2}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
@@ -424,7 +429,7 @@ def groups(date, sight_id):
                                   __parameters_excursion__[11]: json_properties,
                                   __parameters_excursion__[12]: json_sight}
                 json_response.append({__parameters_group__[0]: row[0],
-                                      __parameters_group__[1]: row[1],
+                                      __parameters_group__[1]: str(row[1]),
                                       __parameters_group__[2]: row[2],
                                       __parameters_group__[3]: row[3],
                                       __parameters_group__[4]: row[4],
@@ -434,12 +439,14 @@ def groups(date, sight_id):
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
         else:
-            json_response = {'error': '1'}
+            json_response = {'status': "ERROR",
+                             'error': '1'}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response, 400
     else:
-        json_response = {'error': '1'}
+        json_response = {'status': "ERROR",
+                         'error': '1'}
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
@@ -487,6 +494,95 @@ def groups(date, sight_id):
 #     json_response = json.dumps(json_response)
 #     response = Response(json_response, content_type='application/json; charset=utf-8')
 #     return response
+
+@app.route('/group/<sight_id>')
+def group(sight_id):
+    __parameters_group__ = ['id', 'tour_date', 'seats_reserved', 'guide_id', 'seats_capacity', 'excursion']
+    __parameters_excursion__ = ['id', 'name', 'description', 'capacity', 'average_rating', 'duration', 'linkToSite',
+                                'images', 'category', 'picking_place', 'price', 'properties', 'sight']
+    __parameters_category__ = ['id', 'name']
+    __parameters_picking_place__ = ['id', 'name', 'geoposition']
+    __parameters_price__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
+    __parameters_properties__ = ['id', 'name', 'image']
+    __parameters_sight__ = ['id', 'name']
+    if sight_id is not None:
+        query = 'SELECT g.id, g.tour_date, g.seats_reserved, g.guide_id, g.seats_capacity, e.id, e.name, e.description, ' \
+                'e.capacity, e.average_rating, e.duration, e.link_to_site, e.images, ' \
+                'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.image), s.id, s.name ' \
+                'FROM groups g ' \
+                'LEFT JOIN excursions e ' \
+                'ON g.excursion_id = e.id ' \
+                'LEFT JOIN category c ' \
+                'ON e.category_id = c.id ' \
+                'LEFT JOIN prices p ' \
+                'ON e.price_id = p.id ' \
+                'LEFT JOIN picking_places pp ' \
+                'ON e.picking_place_id = pp.id ' \
+                'LEFT JOIN excursions_excursion_property eep ' \
+                'ON eep.excursion_id = e.id ' \
+                'LEFT JOIN excursion_property ep ' \
+                'ON ep.id = eep.excursion_property_id ' \
+                'LEFT JOIN excursions_sights es ' \
+                'ON es.excursion_id = e.id ' \
+                'LEFT JOIN sights s ' \
+                'ON s.id = es.sight_id ' \
+                'WHERE g.id = '+sight_id+' ' \
+                'GROUP BY g.id, e.id, c.id, p.id, pp.id, s.id ' \
+                'ORDER BY g.id;'
+        rows = db.select_custom_query(query=query)
+        if rows:
+            for row in rows:
+                json_category = {__parameters_category__[0]: row[13],
+                                 __parameters_category__[1]: row[14]}
+                json_price = {__parameters_price__[0]: row[15],
+                              __parameters_price__[1]: row[16],
+                              __parameters_price__[2]: row[17],
+                              __parameters_price__[3]: row[18]}
+                json_picking_place = {__parameters_picking_place__[0]: row[19],
+                                      __parameters_picking_place__[1]: row[20],
+                                      __parameters_picking_place__[2]: row[21]}
+                json_properties = []
+                for i in range(len(row[22])):
+                    json_properties.append({__parameters_properties__[0]: row[22][i],
+                                            __parameters_properties__[1]: row[23][i],
+                                            __parameters_properties__[2]: row[24][i]})
+                json_sight = {__parameters_sight__[0]: row[25],
+                              __parameters_sight__[1]: row[26]}
+                json_excursion = {__parameters_excursion__[0]: row[5],
+                                  __parameters_excursion__[1]: row[6],
+                                  __parameters_excursion__[2]: row[7],
+                                  __parameters_excursion__[3]: row[8],
+                                  __parameters_excursion__[4]: row[9],
+                                  __parameters_excursion__[5]: convert(row[10]),
+                                  __parameters_excursion__[6]: row[11],
+                                  __parameters_excursion__[7]: row[12],
+                                  __parameters_excursion__[8]: json_category,
+                                  __parameters_excursion__[9]: json_picking_place,
+                                  __parameters_excursion__[10]: json_price,
+                                  __parameters_excursion__[11]: json_properties,
+                                  __parameters_excursion__[12]: json_sight}
+                json_response = {__parameters_group__[0]: row[0],
+                                      __parameters_group__[1]: str(row[1]),
+                                      __parameters_group__[2]: row[2],
+                                      __parameters_group__[3]: row[3],
+                                      __parameters_group__[4]: row[4],
+                                      __parameters_group__[5]: json_excursion,
+                                      }
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        else:
+            json_response = {'status': "ERROR",
+                             'error': '1'}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response, 400
+    else:
+        json_response = {'status': "ERROR",
+                         'error': '1'}
+        json_response = json.dumps(json_response)
+        response = Response(json_response, content_type='application/json; charset=utf-8')
+        return response, 400
 
 
 @app.route('/excursion_property')
@@ -645,12 +741,14 @@ def bookingsAdd():
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
         else:
-            json_response = {'error': 1}
+            json_response = {'status': 'ERROR',
+                             'error': 1}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response, 400
     else:
-        json_response = {'error': 1}
+        json_response = {'status': 'ERROR',
+                         'error': 1}
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
@@ -684,7 +782,7 @@ def bookings(tourist_id):
                     json_picking_place = {__parameters_picking_place__[0]: row[6],
                                           __parameters_picking_place__[1]: row[7]}
                     json_group = {__parameters_group__[0]: row[8],
-                                  __parameters_group__[1]: row[9]}
+                                  __parameters_group__[1]: str(row[9])}
                     json_excursion = {__parameters_excursion__[0]: row[3],
                                       __parameters_excursion__[1]: row[4],
                                       __parameters_excursion__[2]: json_picking_place,
@@ -753,7 +851,7 @@ def booking(id):
                                   __parameters_excursion__[4]: json_picking_place,
                                   __parameters_excursion__[5]: json_properties}
                 json_group = {__parameters_group__[0]: row[5],
-                              __parameters_group__[1]: row[6],
+                              __parameters_group__[1]: str(row[6]),
                               __parameters_group__[2]: json_excursion}
                 json_response = {__parameters__[0]: row[0],
                                  __parameters__[1]: row[1],
@@ -794,18 +892,21 @@ def paymentsAdd():
                     "VALUES ("+booking_id+", '"+payment_time+"', 0, 0) " \
                     "RETURNING id;"
             c_id = db.update_insert_custom_query(query)
-            json_response = {'payment_id': c_id,
+            json_response = {'status': "OK",
+                             'payment_id': c_id,
                              'create_datetime': payment_time}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
         else:
-            json_response = {'error': 3}
+            json_response = {'status': "ERROR",
+                             'error': 1}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response, 400
     else:
-        json_response = {'error': 3}
+        json_response = {'status': "ERROR",
+                         'error': 1}
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response, 400
