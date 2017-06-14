@@ -386,7 +386,7 @@ def groups(date, sight_id):
     if not incorrect_input:
         query = 'SELECT g.id, g.tour_date, g.seats_reserved, g.guide_id, g.seats_capacity, e.id, e.name, e.description, ' \
                 'e.capacity, e.average_rating, e.duration, e.link_to_site, e.images, ' \
-                'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.image), s.id, s.name ' \
+                'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.icon), s.id, s.name ' \
                 'FROM groups g ' \
                 'LEFT JOIN excursions e ' \
                 'ON g.excursion_id = e.id ' \
@@ -521,7 +521,7 @@ def group(sight_id):
     if sight_id is not None:
         query = 'SELECT g.id, g.tour_date, g.seats_reserved, g.guide_id, g.seats_capacity, e.id, e.name, e.description, ' \
                 'e.capacity, e.average_rating, e.duration, e.link_to_site, e.images, ' \
-                'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.image), s.id, s.name, o.* ' \
+                'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.icon), s.id, s.name, o.* ' \
                 'FROM groups g ' \
                 'LEFT JOIN excursions e ' \
                 'ON g.excursion_id = e.id ' \
@@ -849,7 +849,7 @@ def booking(id):
             __parameters_operator__ = ['id', 'name', 'logo']
             query = 'SELECT b.id, b.adults, b.children, b.enfants, b.total_price, g.id, g.tour_date, e.id, e.name, ' \
                     'e.duration, o.id, o.name, o.logo, pp.id, pp.name, pp.geoposition, ' \
-                    'array_agg(ep.id), array_agg(ep.name), array_agg(ep.image) ' \
+                    'array_agg(ep.id), array_agg(ep.name), array_agg(ep.icon) ' \
                     'FROM bookings b ' \
                     'LEFT JOIN groups g ' \
                     'ON g.id = b.group_id ' \
