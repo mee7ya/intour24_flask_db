@@ -1,32 +1,15 @@
-from flask import Flask, url_for, request, json, Response, jsonify
+from flask import Flask, url_for, request, json, Response
 from nikita_first_python_program import convert
 from apscheduler.schedulers.blocking import BlockingScheduler
-from flask_swagger_ui import get_swaggerui_blueprint
 import datetime
 import intour24_database
+
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 app.config['JSON_AS_ASCII'] = False
 schedule = BlockingScheduler()
 
-SWAGGER_URL = '' # URL for exposing Swagger UI (without trailing '/')
-API_URL = 'swagger.json'
-
-swaggerui_blueprint = get_swaggerui_blueprint(
-SWAGGER_URL, # Swagger UI static files will be mapped to '{SWAGGER_URL}/dist/'
-API_URL,
-config={ # Swagger UI config overrides
-'supportedSubmitMethods': ['get']
-}
-)
-
-app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
-
-
-# Register blueprint at URL
-# (URL must match the one given to factory function above)
-app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 @app.route('/excursion/<id>')
 def excursion(id):
@@ -37,7 +20,7 @@ def excursion(id):
                           'images']
         query = 'SELECT e.id, e.name, e.description, e.duration, p.price_for_children, p.price_for_adult, ' \
                 'p.price_for_enfant, pp.name, c.name, ' \
-                'e.average_rating, array_agg(ep.name), e.images ' \
+                'e.average_rating, array_agg(DISTINCT ep.name), e.images, p.id, pp.id, c.id, array_agg(DISTINCT ep.id) ' \
                 'FROM excursions e ' \
                 'LEFT JOIN prices p ' \
                 'ON e.price_id = p.id ' \
@@ -50,21 +33,33 @@ def excursion(id):
                 'LEFT JOIN excursion_property ep ' \
                 'ON ep.id = eep.excursion_property_id ' \
                 'WHERE e.id =  ' + id + \
-                'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, ' \
+                'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, p.id, pp.id, c.id, ' \
                 'pp.name, e.average_rating, c.name'
         rows = db.select_custom_query(query=query);
         if rows:
+            json_price = {__parameters__[0]: rows[0][12],
+                          __parameters__[4]: rows[0][4],
+                          __parameters__[5]: rows[0][5],
+                          __parameters__[6]: rows[0][6]
+                          }
+            json_picking_place = {__parameters__[0]: rows[0][13],
+                                  __parameters__[1]: rows[0][7]}
+            json_category = {__parameters__[0]: rows[0][14],
+                             __parameters__[1]: rows[0][8]}
+            json_properties = []
+            for i in range(len(rows[0][15])):
+                json_property = {__parameters__[0]: rows[0][15][i],
+                                 __parameters__[1]: rows[0][10][i]}
+                json_properties.append(json_property)
             json_response = {__parameters__[0]: rows[0][0],
                              __parameters__[1]: rows[0][1],
                              __parameters__[2]: rows[0][2],
                              __parameters__[3]: convert(rows[0][3]),
-                             __parameters__[4]: rows[0][4],
-                             __parameters__[5]: rows[0][5],
-                             __parameters__[6]: rows[0][6],
-                             __parameters__[7]: rows[0][7],
-                             __parameters__[8]: rows[0][8],
+                             'price': json_price,
+                             'pickingPlace': json_picking_place,
+                             'category': json_category,
                              __parameters__[9]: rows[0][9],
-                             __parameters__[10]: rows[0][10],
+                             'properties': json_properties,
                              __parameters__[11]: rows[0][11]}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
@@ -339,26 +334,26 @@ def groups_upd():
                 'FROM groups ' \
                 'WHERE id= ' + group_id
         rows = db.select_custom_query(query)
-        row = rows[0]
-        more_seats_reserved = int(row[0])+int(seats_reserved)
-        if more_seats_reserved <= row[1]:
-            query = 'UPDATE groups SET seats_reserved = '+str(more_seats_reserved)+' WHERE id = '+group_id+' RETURNING id;'
-            db.update_insert_custom_query(query)
-            json_response = {'status': "OK",
-                             'group_id': int(group_id),
-                             'seats_reserved': more_seats_reserved}
-            json_response = json.dumps(json_response)
-            response = Response(json_response, content_type='application/json; charset=utf-8')
-            return response
-        else:
-            json_response = {'status': "ERROR",
-                             'error': 1}
-            json_response = json.dumps(json_response)
-            response = Response(json_response, content_type='application/json; charset=utf-8')
-            return response, 400
-    else:
-        json_response = {'status': "ERROR",
-                         'error': 2}
+        if rows:
+            row = rows[0]
+            more_seats_reserved = int(row[0])+int(seats_reserved)
+            if more_seats_reserved <= row[1]:
+                query = 'UPDATE groups SET seats_reserved = '+str(more_seats_reserved)+' WHERE id = '+group_id+' RETURNING id;'
+                db.update_insert_custom_query(query)
+                json_response = {'status': "OK",
+                                 'group_id': int(group_id),
+                                 'seats_reserved': more_seats_reserved}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response
+            else:
+                json_response = {'status': "ERROR",
+                                 'error': 1}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response, 400
+    json_response = {'status': "ERROR",
+                     'error': 2}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
@@ -753,9 +748,17 @@ def bookingsAdd():
                     and enfants.isdigit() and amount.isdigit() and total_price.isdigit():
                 incorrect_input = False
             else:
-                raise ValueError('id is not digit')
+                json_response = {'status': 'ERROR',
+                                 'error': 5}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response, 400
         except ValueError:
-            incorrect_input = True
+            json_response = {'status': 'ERROR',
+                             'error': 4}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response, 400
         if not incorrect_input:
             query = "INSERT INTO bookings(tourist_id, group_id, adults, children, " \
                     "enfants, amount, total_price, create_datetime, is_cancelled) " \
@@ -822,7 +825,13 @@ def bookings(tourist_id):
                 json_response = json.dumps(json_response)
                 response = Response(json_response, content_type='application/json; charset=utf-8')
                 return response
-    json_response = {'error': 3}
+            else:
+                json_response = {'status': 'ERROR',
+                                 'error': 2}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response, 400
+    json_response = {'error': 1}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
@@ -911,9 +920,17 @@ def paymentsAdd():
             if booking_id.isdigit():
                 incorrect_input = False
             else:
-                raise ValueError('id is not digit')
+                json_response = {'status': "ERROR",
+                                 'error': 5}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response, 400
         except ValueError:
-            incorrect_input = True
+            json_response = {'status': "ERROR",
+                             'error': 4}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response, 400
         if not incorrect_input:
             query = "INSERT INTO payments (booking_id, create_datetime, is_cancelled, is_refund) " \
                     "VALUES ("+booking_id+", '"+payment_time+"', 0, 0) " \
@@ -1035,21 +1052,25 @@ def sights_sight_property():
     return response
 
 
-@app.route('/checkPhone', methods=['POST'])
-def check_phone():
-    phone = request.form.get('phone')
+@app.route('/checkPhone/<phone>')
+def check_phone(phone):
     if phone is not None:
         if phone.isdigit():
             query = "SELECT id FROM tourists WHERE phone='"+phone+"' "
             rows = db.select_custom_query(query)
             if rows:
-                json_response = {"registered": "true"}
+                json_response = {"status": "REGISTERED"}
             else:
-                json_response = {"registered": "false"}
+                json_response = {"status": "FREE"}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
-    json_response = {'status': 'error',
+        else:
+            json_response = {'error': 5}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response, 400
+    json_response = {'status': 'ERROR',
                      'error': 1}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
@@ -1069,26 +1090,30 @@ def registration():
             c_id = db.update_insert_custom_query_if_not_exists(query)
             if c_id is not None:
                 json_response = {"status": "OK",
-                                 "id": +c_id}
+                                 "id": +c_id[0]}
             else:
                 json_response = {"status": "ERROR",
-                                 "error": 1}
+                                 "error": 3}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
-
-    json_response = {'error': 2}
+        else:
+            json_response = {'error': 5}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response, 400
+    json_response = {'error': 1}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
 
 
-@app.route('/updateTourist', methods=['POST'])
+@app.route('/updateTourist', methods=['PUT'])
 def update_tourist():
     c_id = request.form.get('id')
     name = request.form.get('name')
     phone = request.form.get('phone')
-    if c_id is not None and name is not None and phone is not None:
+    if c_id is not None:
         if c_id.isdigit() and phone.isdigit():
             query = "UPDATE tourists SET first_name = '"+name+"', phone = '"+phone+"' WHERE id="+c_id+"RETURNING id;"
             c_id = db.update_insert_custom_query_if_not_exists(query)
@@ -1111,15 +1136,15 @@ def update_tourist():
     return response, 400
 
 
-@app.route('/cancelPayment', methods=['DELETE'])
+@app.route('/cancelPayment', methods=['PUT'])
 def cancel_payment():
     booking_id = request.form.get('booking_id')
     if booking_id is not None:
         if booking_id.isdigit():
-            query = 'DELETE FROM payments WHERE booking_id = '+booking_id+'RETURNING id'
+            query = 'UPDATE payments SET is_cancelled = 1 WHERE booking_id = '+booking_id+'RETURNING id'
             payment_id = db.update_insert_custom_query_if_not_exists(query)
             if payment_id is not None:
-                query = 'DELETE FROM bookings WHERE id = '+booking_id+'RETURNING id'
+                query = 'UPDATE bookings SET is_cancelled = 1 WHERE id = '+booking_id+'RETURNING id'
                 booking_id = db.update_insert_custom_query_if_not_exists(query)
                 json_response = {"status": "OK",
                                  "payment_id": payment_id[0],
@@ -1144,12 +1169,8 @@ def favicon():
     return url_for('static', filename='favicon.ico')
 
 
-@app.route('/')
-def ap2():
-    return ""
-
 # @schedule.scheduled_job('cron', day_of_week='mon-sun', hour=2)
-# def scheduled_job():
+# def scheduled_\job():
 # TODO: add parser execution here
 # print('This job is run every day at 2am.')
 
