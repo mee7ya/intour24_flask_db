@@ -1,15 +1,32 @@
-from flask import Flask, url_for, request, json, Response
+from flask import Flask, url_for, request, json, Response, jsonify
 from nikita_first_python_program import convert
 from apscheduler.schedulers.blocking import BlockingScheduler
+from flask_swagger_ui import get_swaggerui_blueprint
 import datetime
 import intour24_database
-
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 app.config['JSON_AS_ASCII'] = False
 schedule = BlockingScheduler()
 
+SWAGGER_URL = '' # URL for exposing Swagger UI (without trailing '/')
+API_URL = 'swagger.json'
+
+swaggerui_blueprint = get_swaggerui_blueprint(
+SWAGGER_URL, # Swagger UI static files will be mapped to '{SWAGGER_URL}/dist/'
+API_URL,
+config={ # Swagger UI config overrides
+'supportedSubmitMethods': ['get']
+}
+)
+
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+
+
+# Register blueprint at URL
+# (URL must match the one given to factory function above)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 @app.route('/excursion/<id>')
 def excursion(id):
@@ -54,7 +71,7 @@ def excursion(id):
             return response
         else:
             json_response = {'status': "ERROR",
-                             'error': '1'}
+                             'error': '2'}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response, 400
@@ -499,16 +516,17 @@ def groups(date, sight_id):
 def group(sight_id):
     __parameters_group__ = ['id', 'tour_date', 'seats_reserved', 'guide_id', 'seats_capacity', 'excursion']
     __parameters_excursion__ = ['id', 'name', 'description', 'capacity', 'average_rating', 'duration', 'linkToSite',
-                                'images', 'category', 'picking_place', 'price', 'properties', 'sight']
+                                'images', 'category', 'picking_place', 'price', 'properties', 'sight', 'operator']
     __parameters_category__ = ['id', 'name']
     __parameters_picking_place__ = ['id', 'name', 'geoposition']
     __parameters_price__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
     __parameters_properties__ = ['id', 'name', 'image']
     __parameters_sight__ = ['id', 'name']
+    __parameters_operator__ = ['id', 'name', 'phone', 'address', 'logo', 'accreditation']
     if sight_id is not None:
         query = 'SELECT g.id, g.tour_date, g.seats_reserved, g.guide_id, g.seats_capacity, e.id, e.name, e.description, ' \
                 'e.capacity, e.average_rating, e.duration, e.link_to_site, e.images, ' \
-                'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.image), s.id, s.name ' \
+                'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.image), s.id, s.name, o.* ' \
                 'FROM groups g ' \
                 'LEFT JOIN excursions e ' \
                 'ON g.excursion_id = e.id ' \
@@ -526,8 +544,10 @@ def group(sight_id):
                 'ON es.excursion_id = e.id ' \
                 'LEFT JOIN sights s ' \
                 'ON s.id = es.sight_id ' \
+                'LEFT JOIN operator o ' \
+                'ON o.id = e.operator_id ' \
                 'WHERE g.id = '+sight_id+' ' \
-                'GROUP BY g.id, e.id, c.id, p.id, pp.id, s.id ' \
+                'GROUP BY g.id, e.id, c.id, p.id, pp.id, s.id, o.id ' \
                 'ORDER BY g.id;'
         rows = db.select_custom_query(query=query)
         if rows:
@@ -548,6 +568,12 @@ def group(sight_id):
                                             __parameters_properties__[2]: row[24][i]})
                 json_sight = {__parameters_sight__[0]: row[25],
                               __parameters_sight__[1]: row[26]}
+                json_operator = {__parameters_operator__[0]: row[27],
+                                 __parameters_operator__[1]: row[28],
+                                 __parameters_operator__[2]: row[29],
+                                 __parameters_operator__[3]: row[30],
+                                 __parameters_operator__[4]: row[31],
+                                 __parameters_operator__[5]: row[32]}
                 json_excursion = {__parameters_excursion__[0]: row[5],
                                   __parameters_excursion__[1]: row[6],
                                   __parameters_excursion__[2]: row[7],
@@ -560,7 +586,8 @@ def group(sight_id):
                                   __parameters_excursion__[9]: json_picking_place,
                                   __parameters_excursion__[10]: json_price,
                                   __parameters_excursion__[11]: json_properties,
-                                  __parameters_excursion__[12]: json_sight}
+                                  __parameters_excursion__[12]: json_sight,
+                                  __parameters_excursion__[13]: json_operator}
                 json_response = {__parameters_group__[0]: row[0],
                                       __parameters_group__[1]: str(row[1]),
                                       __parameters_group__[2]: row[2],
@@ -786,7 +813,7 @@ def bookings(tourist_id):
                     json_excursion = {__parameters_excursion__[0]: row[3],
                                       __parameters_excursion__[1]: row[4],
                                       __parameters_excursion__[2]: json_picking_place,
-                                      __parameters_excursion__[3]: row[5]}
+                                      __parameters_excursion__[3]: convert(row[5])}
                     json_response.append({__parameters_booking__[0]: row[0],
                                           __parameters_booking__[1]: json_excursion,
                                           __parameters_booking__[2]: row[1],
@@ -1022,7 +1049,8 @@ def check_phone():
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
-    json_response = {'error': 1}
+    json_response = {'status': 'error',
+                     'error': 1}
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response, 400
@@ -1040,7 +1068,8 @@ def registration():
                     "RETURNING id;"
             c_id = db.update_insert_custom_query_if_not_exists(query)
             if c_id is not None:
-                json_response = {"status": "OK"}
+                json_response = {"status": "OK",
+                                 "id": +c_id}
             else:
                 json_response = {"status": "ERROR",
                                  "error": 1}
@@ -1064,8 +1093,8 @@ def update_tourist():
             query = "UPDATE tourists SET first_name = '"+name+"', phone = '"+phone+"' WHERE id="+c_id+"RETURNING id;"
             c_id = db.update_insert_custom_query_if_not_exists(query)
             if c_id is not None:
-                json_response = {"id": c_id[0],
-                                 "status": "OK"}
+                json_response = {"status": "OK",
+                                 "id": c_id[0]}
                 json_response = json.dumps(json_response)
                 response = Response(json_response, content_type='application/json; charset=utf-8')
                 return response
@@ -1092,9 +1121,9 @@ def cancel_payment():
             if payment_id is not None:
                 query = 'DELETE FROM bookings WHERE id = '+booking_id+'RETURNING id'
                 booking_id = db.update_insert_custom_query_if_not_exists(query)
-                json_response = {"payment_id": payment_id[0],
-                                "booking_id": booking_id[0],
-                                "status": "OK"}
+                json_response = {"status": "OK",
+                                 "payment_id": payment_id[0],
+                                 "booking_id": booking_id[0]}
                 json_response = json.dumps(json_response)
                 response = Response(json_response, content_type='application/json; charset=utf-8')
                 return response
@@ -1117,7 +1146,7 @@ def favicon():
 
 @app.route('/')
 def ap2():
-    return 'api'
+    return ""
 
 # @schedule.scheduled_job('cron', day_of_week='mon-sun', hour=2)
 # def scheduled_job():
