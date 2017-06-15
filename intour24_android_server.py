@@ -26,10 +26,11 @@ def excursion(id):
             return send_400_with_error(6)
         __parameters__ = ['id', 'name', 'description', 'duration', 'priceForChildren', 'priceForAdult',
                           'priceForEnfant', 'pickingPlace', 'category', 'rating', 'properties',
-                          'images']
+                          'images', 'phone', 'address', 'logo', 'accreditation', 'capacity', 'linkToSite']
         query = 'SELECT e.id, e.name, e.description, e.duration, p.price_for_children, p.price_for_adult, ' \
                 'p.price_for_enfant, pp.name, c.name, ' \
-                'e.average_rating, array_agg(DISTINCT ep.name), e.images, p.id, pp.id, c.id, array_agg(DISTINCT ep.id) ' \
+                'e.average_rating, array_agg(DISTINCT ep.name), e.images, p.id, pp.id, c.id, array_agg(DISTINCT ep.id), ' \
+                'o.id, o.name, o.phone, o.address, o.logo, o.accreditation, e.capacity, e.link_to_site ' \
                 'FROM excursions e ' \
                 'LEFT JOIN prices p ' \
                 'ON e.price_id = p.id ' \
@@ -41,9 +42,11 @@ def excursion(id):
                 'ON e.id = eep.excursion_id ' \
                 'LEFT JOIN excursion_property ep ' \
                 'ON ep.id = eep.excursion_property_id ' \
+                'LEFT JOIN operator o ' \
+                'ON o.id = e.operator_id ' \
                 'WHERE e.id =  ' + id + \
                 'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, p.id, pp.id, c.id, ' \
-                'pp.name, e.average_rating, c.name'
+                'pp.name, e.average_rating, c.name, o.id;'
         rows = db.select_custom_query(query=query);
         if rows:
             json_price = {__parameters__[0]: rows[0][12],
@@ -60,6 +63,12 @@ def excursion(id):
                 json_property = {__parameters__[0]: rows[0][15][i],
                                  __parameters__[1]: rows[0][10][i]}
                 json_properties.append(json_property)
+            json_operator = {__parameters__[0]: rows[0][16],
+                             __parameters__[1]: rows[0][17],
+                             __parameters__[12]: rows[0][18],
+                             __parameters__[13]: rows[0][19],
+                             __parameters__[14]: rows[0][20],
+                             __parameters__[15]: rows[0][21]}
             json_response = {__parameters__[0]: rows[0][0],
                              __parameters__[1]: rows[0][1],
                              __parameters__[2]: rows[0][2],
@@ -69,7 +78,10 @@ def excursion(id):
                              'category': json_category,
                              __parameters__[9]: rows[0][9],
                              'properties': json_properties,
-                             __parameters__[11]: rows[0][11]}
+                             __parameters__[11]: rows[0][11],
+                             'operator': json_operator,
+                             __parameters__[16]: rows[0][22],
+                             __parameters__[17]: rows[0][23]}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
@@ -422,49 +434,46 @@ def groups(date, sight_id):
             'ORDER BY g.id;'
     rows = db.select_custom_query(query=query)
     json_response = []
-    if rows:
-        for row in rows:
-            json_category = {__parameters_category__[0]: row[13],
-                             __parameters_category__[1]: row[14]}
-            json_price = {__parameters_price__[0]: row[15],
-                          __parameters_price__[1]: row[16],
-                          __parameters_price__[2]: row[17],
-                          __parameters_price__[3]: row[18]}
-            json_picking_place = {__parameters_picking_place__[0]: row[19],
-                                  __parameters_picking_place__[1]: row[20],
-                                  __parameters_picking_place__[2]: row[21]}
-            json_properties = []
-            for i in range(len(row[22])):
-                json_properties.append({__parameters_properties__[0]: row[22][i],
-                                        __parameters_properties__[1]: row[23][i],
-                                        __parameters_properties__[2]: row[24][i]})
-            json_sight = {__parameters_sight__[0]: row[25],
-                          __parameters_sight__[1]: row[26]}
-            json_excursion = {__parameters_excursion__[0]: row[5],
-                              __parameters_excursion__[1]: row[6],
-                              __parameters_excursion__[2]: row[7],
-                              __parameters_excursion__[3]: row[8],
-                              __parameters_excursion__[4]: row[9],
-                              __parameters_excursion__[5]: convert(row[10]),
-                              __parameters_excursion__[6]: row[11],
-                              __parameters_excursion__[7]: row[12],
-                              __parameters_excursion__[8]: json_category,
-                              __parameters_excursion__[9]: json_picking_place,
-                              __parameters_excursion__[10]: json_price,
-                              __parameters_excursion__[11]: json_properties,
-                              __parameters_excursion__[12]: json_sight}
-            json_response.append({__parameters_group__[0]: row[0],
-                                  __parameters_group__[1]: str(row[1]),
-                                  __parameters_group__[2]: row[2],
-                                  __parameters_group__[3]: row[3],
-                                  __parameters_group__[4]: row[4],
-                                  __parameters_group__[5]: json_excursion,
-                                  })
-        json_response = json.dumps(json_response)
-        response = Response(json_response, content_type='application/json; charset=utf-8')
-        return response
-    else:
-        return send_400_with_error(2)
+    for row in rows:
+        json_category = {__parameters_category__[0]: row[13],
+                         __parameters_category__[1]: row[14]}
+        json_price = {__parameters_price__[0]: row[15],
+                      __parameters_price__[1]: row[16],
+                      __parameters_price__[2]: row[17],
+                      __parameters_price__[3]: row[18]}
+        json_picking_place = {__parameters_picking_place__[0]: row[19],
+                              __parameters_picking_place__[1]: row[20],
+                              __parameters_picking_place__[2]: row[21]}
+        json_properties = []
+        for i in range(len(row[22])):
+            json_properties.append({__parameters_properties__[0]: row[22][i],
+                                    __parameters_properties__[1]: row[23][i],
+                                    __parameters_properties__[2]: row[24][i]})
+        json_sight = {__parameters_sight__[0]: row[25],
+                      __parameters_sight__[1]: row[26]}
+        json_excursion = {__parameters_excursion__[0]: row[5],
+                          __parameters_excursion__[1]: row[6],
+                          __parameters_excursion__[2]: row[7],
+                          __parameters_excursion__[3]: row[8],
+                          __parameters_excursion__[4]: row[9],
+                          __parameters_excursion__[5]: convert(row[10]),
+                          __parameters_excursion__[6]: row[11],
+                          __parameters_excursion__[7]: row[12],
+                          __parameters_excursion__[8]: json_category,
+                          __parameters_excursion__[9]: json_picking_place,
+                          __parameters_excursion__[10]: json_price,
+                          __parameters_excursion__[11]: json_properties,
+                          __parameters_excursion__[12]: json_sight}
+        json_response.append({__parameters_group__[0]: row[0],
+                              __parameters_group__[1]: str(row[1]),
+                              __parameters_group__[2]: row[2],
+                              __parameters_group__[3]: row[3],
+                              __parameters_group__[4]: row[4],
+                              __parameters_group__[5]: json_excursion,
+                              })
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
 
 
 # @app.route('/groups/')
@@ -730,7 +739,7 @@ def reviews():
 
 
 @app.route('/bookings/', methods=['POST'])
-def bookingsAdd():
+def bookings_add():
     group_id = request.form.get('group_id')
     tourist_id = request.form.get('tourist_id')
     adults = request.form.get('adults')
@@ -750,16 +759,36 @@ def bookingsAdd():
                 return send_400_with_error(6)
         except ValueError:
             return send_400_with_error(5)
-        query = "INSERT INTO bookings(tourist_id, group_id, adults, children, " \
-                "enfants, total_price, create_datetime, is_cancelled) " \
-                "VALUES ("+tourist_id+", "+group_id+", "+adults+", "+children+", "+enfants+", "+total_price+", '"+create_datetime+"', 0) " \
-                "RETURNING id; "
-        c_id = db.update_insert_custom_query(query)
-        json_response = {'status': 'OK',
-                         'id': c_id}
-        json_response = json.dumps(json_response)
-        response = Response(json_response, content_type='application/json; charset=utf-8')
-        return response
+        query = "SELECT seats_reserved, seats_capacity FROM groups WHERE id="+group_id
+        rows = db.select_custom_query(query)
+        if rows:
+            people_reserved = int(rows[0][0]) + int(children) + int(adults) + int(enfants)
+            people_capacity = int(rows[0][1])
+            if int(people_reserved) <= int(people_capacity):
+                query = "INSERT INTO bookings(tourist_id, group_id, adults, children, " \
+                        "enfants, total_price, create_datetime, is_cancelled) " \
+                        "VALUES ("+tourist_id+", "+group_id+", "+adults+", "+children+", "+\
+                        enfants+", "+total_price+", '"+create_datetime+"', 0) " \
+                        "RETURNING id; "
+                c_id = db.update_insert_custom_query(query)
+                if people_capacity == people_reserved:
+                    json_response = {'status': 'OK',
+                                     'full': 1,
+                                     'id': c_id}
+                    json_response = json.dumps(json_response)
+                    response = Response(json_response, content_type='application/json; charset=utf-8')
+                    return response
+                else:
+                    json_response = {'status': 'OK',
+                                    'full': 0,
+                                    'id': c_id}
+                    json_response = json.dumps(json_response)
+                    response = Response(json_response, content_type='application/json; charset=utf-8')
+                    return response
+            else:
+                return send_400_with_error(7)
+        else:
+            return send_400_with_error(2)
     else:
         return send_400_with_error(1)
 
@@ -891,7 +920,7 @@ def booking(id):
 
 
 @app.route('/payments/', methods=['POST'])
-def paymentsAdd():
+def payments_add():
     booking_id = request.form.get('booking_id')
     payment_time = request.form.get('payment_time')
     identifier = request.form.get('identifier')
@@ -905,14 +934,17 @@ def paymentsAdd():
                 return send_400_with_error(6)
         except ValueError:
             return send_400_with_error(5)
-
         query = "INSERT INTO payments (booking_id, create_datetime, is_cancelled, is_refund) " \
-                "VALUES ("+booking_id+", '"+payment_time+"', 0, 0) " \
+                "SELECT '"+booking_id+"', '"+payment_time+"', 0, 0 " \
+                "WHERE NOT EXISTS (SELECT booking_id FROM payments WHERE booking_id = '" + booking_id + "') " \
                 "RETURNING id;"
-        c_id = db.update_insert_custom_query(query)
-        json_response = {'status': "OK",
-                         'payment_id': c_id,
+        c_id = db.update_insert_custom_query_if_not_exists(query)
+        if c_id:
+            json_response = {'status': "OK",
+                         'payment_id': c_id[0],
                          'create_datetime': payment_time}
+        else:
+            return send_400_with_error(7)
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response
@@ -1020,14 +1052,16 @@ def sights_sight_property():
 def check_phone(phone):
     if phone != '':
         if phone.isdigit():
-            if len(phone) > 20:
+            if len(phone) > 20 and len(phone) > 8:
                 return send_400_with_error(6)
             query = "SELECT id FROM tourists WHERE phone='"+phone+"' "
             rows = db.select_custom_query(query)
             if rows:
-                json_response = {"status": 1}
+                json_response = {"status": "OK",
+                                 "registered": 1}
             else:
-                json_response = {"status": 0}
+                json_response = {"status": "OK",
+                                 "registered": 0}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
@@ -1057,7 +1091,7 @@ def registration():
                 response = Response(json_response, content_type='application/json; charset=utf-8')
                 return response
             else:
-                return send_400_with_error(2)
+                return send_400_with_error(3)
         else:
             try:
                 if int(phone) < 0:
