@@ -27,11 +27,11 @@ def excursion(id):
                 return send_400_with_error(6)
             __parameters__ = ['id', 'name', 'description', 'duration', 'priceForChildren', 'priceForAdult',
                               'priceForEnfant', 'pickingPlace', 'category', 'rating', 'properties',
-                              'images', 'phone', 'address', 'logo', 'accreditation', 'capacity', 'linkToSite']
+                              'images', 'phone', 'address', 'logo', 'accreditation', 'capacity', 'linkToSite', 'icon']
             query = 'SELECT e.id, e.name, e.description, e.duration, p.price_for_children, p.price_for_adult, ' \
                     'p.price_for_enfant, pp.name, c.name, ' \
                     'e.average_rating, array_agg(DISTINCT ep.name), e.images, p.id, pp.id, c.id, array_agg(DISTINCT ep.id), ' \
-                    'o.id, o.name, o.phone, o.address, o.logo, o.accreditation, e.capacity, e.link_to_site ' \
+                    'o.id, o.name, o.phone, o.address, o.logo, o.accreditation, e.capacity, e.link_to_site, array_agg(DISTINCT ep.icon) ' \
                     'FROM excursions e ' \
                     'LEFT JOIN prices p ' \
                     'ON e.price_id = p.id ' \
@@ -62,7 +62,8 @@ def excursion(id):
                 json_properties = []
                 for i in range(len(rows[0][15])):
                     json_property = {__parameters__[0]: rows[0][15][i],
-                                     __parameters__[1]: rows[0][10][i]}
+                                     __parameters__[1]: rows[0][10][i],
+                                     __parameters__[18]: rows[0][24][i]}
                     json_properties.append(json_property)
                 json_operator = {__parameters__[0]: rows[0][16],
                                  __parameters__[1]: rows[0][17],
