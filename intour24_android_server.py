@@ -351,7 +351,7 @@ def schedule():
 def groups_upd():
     group_id = request.form.get('group_id')
     seats_reserved = request.form.get('seats_reserved');
-    if not (group_id == '' or seats_reserved == ''):
+    if not (group_id == '' or seats_reserved == '' or group_id is None or seats_reserved is None):
         try:
             if int(group_id) <= 0 or int(seats_reserved) == 0:
                 return send_400_with_error(6)
@@ -400,7 +400,7 @@ def groups(date, sight_id):
     __parameters_properties__ = ['id', 'name', 'image']
     __parameters_sight__ = ['id', 'name']
     __parameters_operator__ = ['id', 'name', 'phone', 'address', 'logo', 'accreditation']
-    if date is not None and sight_id is not None:
+    if date is not None and sight_id is not None and date != '' and sight_id is not None:
         try:
             datetime.datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
@@ -546,7 +546,7 @@ def group(sight_id):
     __parameters_properties__ = ['id', 'name', 'image']
     __parameters_sight__ = ['id', 'name']
     __parameters_operator__ = ['id', 'name', 'phone', 'address', 'logo', 'accreditation']
-    if sight_id is not None:
+    if sight_id is not None and sight_id != '':
         try:
             if int(sight_id) <= 0:
                 return send_400_with_error(6)
@@ -632,128 +632,6 @@ def group(sight_id):
         return send_400_with_error(1)
 
 
-@app.route('/excursion_property')
-def excursion_property():
-    __table__ = 'excursion_property'
-    __parameters__ = ['id', 'name', 'image']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2]})
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
-
-
-@app.route('/excursions_excursion_property')
-def excursions_excursion_property():
-    __table__ = 'excursions_excursion_property'
-    __parameters__ = ['id', 'excursion_id', 'excursion_property_id']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2]
-                                  })
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
-
-
-@app.route('/transport_type')
-def transport_type():
-    __table__ = 'transport_type'
-    __parameters__ = ['id', 'name', 'transport_id']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2]
-                                  })
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
-
-
-@app.route('/transport')
-def transport():
-    __table__ = 'transport'
-    __parameters__ = ['id', 'capacity', 'number', 'group_id']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2],
-                                  __parameters__[3]: row[3]
-                                  })
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2],
-                         __parameters__[2]: rows[0][2]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
-
-
-@app.route('/reviews')
-def reviews():
-    __table__ = 'reviews'
-    __parameters__ = ['id', 'excursion_id', 'guide_id', 'excursion_rate', 'guide_rate', 'feedback']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2],
-                                  __parameters__[3]: row[3],
-                                  __parameters__[4]: row[4],
-                                  __parameters__[5]: row[5]
-                                  })
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2],
-                         __parameters__[3]: rows[0][3],
-                         __parameters__[4]: rows[0][4],
-                         __parameters__[5]: rows[0][5]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
-
-
 @app.route('/bookings/', methods=['POST'])
 def bookings_add():
     group_id = request.form.get('group_id')
@@ -764,7 +642,8 @@ def bookings_add():
     create_datetime = request.form.get('create_datetime')
     total_price = request.form.get('total_price')
     if not (group_id == '' or tourist_id == '' or adults == '' or children == '' or enfants == '' or
-            create_datetime == '' or total_price == ''):
+            create_datetime == '' or total_price == '' or group_id is None or tourist_id is None or adults is None or
+            children is None or enfants is None or create_datetime is None or total_price is None):
         try:
             datetime.datetime.strptime(create_datetime, '%Y-%m-%d %H:%M:%S')
         except ValueError:
@@ -811,7 +690,7 @@ def bookings_add():
 
 @app.route('/bookingsByTouristId/<tourist_id>')
 def bookings(tourist_id):
-    if tourist_id is not None:
+    if tourist_id is not None and tourist_id != '':
         if tourist_id.isdigit():
             if int(tourist_id) == 0:
                 return send_400_with_error(6)
@@ -941,7 +820,8 @@ def payments_add():
     booking_id = request.form.get('booking_id')
     payment_time = request.form.get('payment_time')
     identifier = request.form.get('identifier')
-    if booking_id != '' and payment_time != '' and identifier != '':
+    if booking_id != '' and payment_time != '' and identifier != '' and booking_id is not None and \
+                    payment_time is not None:
         try:
             datetime.datetime.strptime(payment_time, '%Y-%m-%d %H:%M:%S')
         except ValueError:
@@ -969,105 +849,9 @@ def payments_add():
         return send_400_with_error(1)
 
 
-@app.route('/tourists')
-def tourists():
-    __table__ = 'tourists'
-    __parameters__ = ['id', 'first_name', 'email', 'phone', 'last_name']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2],
-                                  __parameters__[3]: row[3],
-                                  __parameters__[4]: row[4]
-                                  })
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2],
-                         __parameters__[3]: rows[0][3],
-                         __parameters__[4]: rows[0][4]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
-
-
-@app.route('/sight_property')
-def sight_property():
-    __table__ = 'sight_property'
-    __parameters__ = ['id', 'name', 'image']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2],
-                                  })
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
-
-
-@app.route('/excursions_sights')
-def excursions_sights():
-    __table__ = 'excursions_sights'
-    __parameters__ = ['id', 'excursion_id', 'sight_id']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2],
-                                  })
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
-
-
-@app.route('/sights_sight_property')
-def sights_sight_property():
-    __table__ = 'sights_sight_property'
-    __parameters__ = ['id', 'sight_id', 'sight_property_id']
-    c_id = request.args.get('id')
-    if c_id is None:
-        rows = db.select_query(table=__table__)
-        json_response = []
-        for row in rows:
-            json_response.append({__parameters__[0]: row[0],
-                                  __parameters__[1]: row[1],
-                                  __parameters__[2]: row[2],
-                                  })
-    else:
-        rows = db.select_query_with_id(table=__table__, c_id=c_id)
-        json_response = {__parameters__[0]: rows[0][0],
-                         __parameters__[1]: rows[0][1],
-                         __parameters__[2]: rows[0][2]}
-    json_response = json.dumps(json_response)
-    response = Response(json_response, content_type='application/json; charset=utf-8')
-    return response
-
-
 @app.route('/checkPhone/<phone>')
 def check_phone(phone):
-    if phone != '':
+    if phone != '' and phone is not None:
         if phone.isdigit():
             if len(phone) > 20 and len(phone) > 8:
                 return send_400_with_error(6)
@@ -1123,7 +907,7 @@ def update_tourist():
     c_id = request.form.get('id')
     name = request.form.get('name')
     phone = request.form.get('phone')
-    if c_id != '' and name != '' and phone != '':
+    if c_id != '' and name != '' and phone != '' and c_id is not None and name is not None and phone is not None:
         if len(name) > 60 or len(phone) > 20:
             return send_400_with_error(6)
         try:
@@ -1147,7 +931,7 @@ def update_tourist():
 @app.route('/cancelPayment', methods=['PUT'])
 def cancel_payment():
     booking_id = request.form.get('booking_id')
-    if booking_id != '':
+    if booking_id != '' and booking_id is not None:
         if booking_id.isdigit():
             if int(booking_id) == 0:
                 return send_400_with_error(6)
@@ -1175,6 +959,46 @@ def cancel_payment():
             except ValueError:
                 return send_400_with_error(5)
     return send_400_with_error(1)
+
+
+@app.route('/paymentByBookingId/<id>')
+def payment_by_booking_id(id):
+    if id != '' and id is not None:
+        try:
+            if int(id) <= 0:
+                return send_400_with_error(6)
+        except ValueError:
+            return send_400_with_error(5)
+        __parameters_payment__ = ['id', 'booking_id', 'create_datetime', 'cancelled_datetime',
+                                  'refund_datetime', 'identifier', 'is_cancelled', 'is_refund']
+        query = "SELECT * FROM payments WHERE booking_id="+id
+        rows = db.select_custom_query(query)
+        if rows:
+            row = rows[0]
+            formatted_create_datetime = None
+            formatted_cancel_datetime = None
+            formatted_refund_datetime = None
+            if row[2] is not None:
+                formatted_create_datetime = str(row[2])
+            if row[3] is not None:
+                formatted_cancel_datetime = str(row[3])
+            if row[4] is not None:
+                formatted_refund_datetime = str(row[4])
+            json_response = {__parameters_payment__[0]: row[0],
+                             __parameters_payment__[1]: row[1],
+                             __parameters_payment__[2]: formatted_create_datetime,
+                             __parameters_payment__[3]: formatted_cancel_datetime,
+                             __parameters_payment__[4]: formatted_refund_datetime,
+                             __parameters_payment__[5]: row[5],
+                             __parameters_payment__[6]: row[6],
+                             __parameters_payment__[7]: row[7]}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        else:
+            return send_400_with_error(2)
+    else:
+        return send_400_with_error(1)
 
 
 @app.route('/favicon.ico')
