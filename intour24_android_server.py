@@ -1002,6 +1002,65 @@ def payment_by_booking_id(id):
         return send_400_with_error(1)
 
 
+# @app.route('/payment')
+# def payment_upd():
+#     id = request.form.get('id')
+#     booking_id = request.form.get('booking_id')
+#     create_datetime = request.form.get('create_datetime')
+#     cancelled_datetime = request.form.get('cancelled_datetime')
+#     refund_datetime = request.form.get('refund_datetime')
+#     identifier = request.form.get('identifier')
+#     is_cancelled = request.form.get('is_cancelled')
+#     is_refund = request.form.get('is_refund')
+#     if id != '' and booking_id != '' and create_datetime != '' and cancelled_datetime != '' and refund_datetime != '' \
+#         and identifier != '' and is_cancelled != '' and is_refund != '' and id is not None and booking_id is not None \
+#         and create_datetime is not None and cancelled_datetime is not None and refund_datetime is not None and \
+#         identifier is not None and is_cancelled is not None and is_refund is not None:
+#         try:
+#             datetime.datetime.strptime(create_datetime, '%Y-%m-%d %H:%M:%S')
+#             datetime.datetime.strptime(cancelled_datetime, '%Y-%m-%d %H:%M:%S')
+#             datetime.datetime.strptime(refund_datetime, '%Y-%m-%d %H:%M:%S')
+#         except ValueError:
+#             return send_400_with_error(4)
+#         try:
+#             if int(id) <= 0 or int(booking_id) <= 0 or int(is_cancelled) < 0 or int(is_cancelled) > 1 \
+#                 or int(is_refund) < 0 or int(is_refund) > 1:
+#                 return send_400_with_error(6)
+#         except ValueError:
+#             return send_400_with_error(5)
+#         query =
+#     else:
+#         return send_400_with_error(1)
+
+
+@app.route('/cancelBooking', methods=['PUT'])
+def cancel_booking():
+    id = request.form.get('id')
+    cancelled_datetime = request.form.get('cancelled_datetime')
+    if id != '' and cancelled_datetime != '' and id is not None and cancelled_datetime is not None:
+        try:
+            datetime.datetime.strptime(cancelled_datetime, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return send_400_with_error(4)
+        try:
+            if int(id) <= 0:
+                return send_400_with_error(6)
+        except ValueError:
+            return send_400_with_error(5)
+        query = "UPDATE bookings SET is_cancelled = 1, update_datetime = '"+cancelled_datetime+"' WHERE id="+id+" RETURNING id"
+        c_id = db.update_insert_custom_query_if_not_exists(query)
+        if c_id:
+            json_response = {'status': 'OK',
+                             'id': c_id[0]}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        else:
+            return send_400_with_error(2)
+    else:
+        return send_400_with_error(1)
+
+
 @app.route('/favicon.ico')
 def favicon():
     return url_for('static', filename='favicon.ico')
