@@ -822,7 +822,7 @@ def payments_add():
     payment_time = request.form.get('payment_time')
     identifier = request.form.get('identifier')
     if booking_id != '' and payment_time != '' and identifier != '' and booking_id is not None and \
-                    payment_time is not None:
+                    payment_time is not None and identifier is not None:
         try:
             datetime.datetime.strptime(payment_time, '%Y-%m-%d %H:%M:%S')
         except ValueError:
@@ -932,17 +932,22 @@ def update_tourist():
 @app.route('/cancelPayment', methods=['PUT'])
 def cancel_payment():
     booking_id = request.form.get('booking_id')
+    cancelled_datetime = request.form.get('cancelled_datetime')
     if booking_id != '' and booking_id is not None:
+        try:
+            datetime.datetime.strptime(cancelled_datetime, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return  send_400_with_error(4)
         if booking_id.isdigit():
             if int(booking_id) == 0:
                 return send_400_with_error(6)
             query = "SELECT id FROM payments WHERE booking_id = "+booking_id+" AND is_cancelled = 1"
             rows = db.select_custom_query(query)
             if not rows:
-                query = 'UPDATE payments SET is_cancelled = 1 WHERE booking_id = '+booking_id+'RETURNING id'
+                query = "UPDATE payments SET is_cancelled = 1, cancelled_datetime = '"+cancelled_datetime+"' WHERE booking_id = "+booking_id+"RETURNING id"
                 payment_id = db.update_insert_custom_query_if_not_exists(query)
                 if payment_id is not None:
-                    query = 'UPDATE bookings SET is_cancelled = 1 WHERE id = '+booking_id+'RETURNING id'
+                    query = "UPDATE bookings SET is_cancelled = 1, update_datetime = '"+cancelled_datetime+"' WHERE id = "+booking_id+"RETURNING id"
                     booking_id = db.update_insert_custom_query_if_not_exists(query)
                     json_response = {"status": "OK",
                                      "payment_id": payment_id[0],
