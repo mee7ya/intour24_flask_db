@@ -976,7 +976,7 @@ def payment_by_booking_id(id):
         except ValueError:
             return send_400_with_error(5)
         __parameters_payment__ = ['id', 'booking_id', 'create_datetime', 'cancelled_datetime',
-                                  'refund_datetime', 'identifier', 'is_cancelled', 'is_refund']
+                                  'refund_datetime', 'is_cancelled', 'is_refund', 'identifier']
         query = "SELECT * FROM payments WHERE booking_id="+id
         rows = db.select_custom_query(query)
         if rows:
