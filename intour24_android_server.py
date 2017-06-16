@@ -944,10 +944,10 @@ def cancel_payment():
             query = "SELECT id FROM payments WHERE booking_id = "+booking_id+" AND is_cancelled = 1"
             rows = db.select_custom_query(query)
             if not rows:
-                query = "UPDATE payments SET is_cancelled = 1, cancelled_datetime = '"+cancelled_datetime+"' WHERE booking_id = "+booking_id+"RETURNING id"
+                query = "UPDATE payments SET is_cancelled = 1, cancelled_datetime = '"+cancelled_datetime+"' WHERE booking_id = "+booking_id+" RETURNING id"
                 payment_id = db.update_insert_custom_query_if_not_exists(query)
                 if payment_id is not None:
-                    query = "UPDATE bookings SET is_cancelled = 1, update_datetime = '"+cancelled_datetime+"' WHERE id = "+booking_id+"RETURNING id"
+                    query = "UPDATE bookings SET is_cancelled = 1, update_datetime = '"+cancelled_datetime+"' WHERE id = "+booking_id+" RETURNING id"
                     booking_id = db.update_insert_custom_query_if_not_exists(query)
                     json_response = {"status": "OK",
                                      "payment_id": payment_id[0],
