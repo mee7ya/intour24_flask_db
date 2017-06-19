@@ -31,7 +31,8 @@ def excursion(id):
             query = 'SELECT e.id, e.name, e.description, e.duration, p.price_for_children, p.price_for_adult, ' \
                     'p.price_for_enfant, pp.name, c.name, ' \
                     'e.average_rating, array_agg(DISTINCT ep.name), e.images, p.id, pp.id, c.id, array_agg(DISTINCT ep.id), ' \
-                    'o.id, o.name, o.phone, o.address, o.logo, o.accreditation, e.capacity, e.link_to_site, array_agg(DISTINCT ep.icon) ' \
+                    'o.id, o.name, o.phone, o.address, o.logo, o.accreditation, e.capacity, e.link_to_site, ' \
+                    'array_agg(DISTINCT ep.icon), c.icon ' \
                     'FROM excursions e ' \
                     'LEFT JOIN prices p ' \
                     'ON e.price_id = p.id ' \
@@ -58,7 +59,8 @@ def excursion(id):
                 json_picking_place = {__parameters__[0]: rows[0][13],
                                       __parameters__[1]: rows[0][7]}
                 json_category = {__parameters__[0]: rows[0][14],
-                                 __parameters__[1]: rows[0][8]}
+                                 __parameters__[1]: rows[0][8],
+                                 __parameters__[18]: rows[0][25]}
                 json_properties = []
                 for i in range(len(rows[0][15])):
                     json_property = {__parameters__[0]: rows[0][15][i],
@@ -395,7 +397,7 @@ def groups(date, sight_id):
     __parameters_group__ = ['id', 'tour_date', 'seats_reserved', 'guide_id', 'seats_capacity', 'excursion']
     __parameters_excursion__ = ['id', 'name', 'description', 'capacity', 'average_rating', 'duration', 'linkToSite',
                                 'images', 'category', 'picking_place', 'price', 'properties', 'sight', 'operator']
-    __parameters_category__ = ['id', 'name']
+    __parameters_category__ = ['id', 'name', 'icon']
     __parameters_picking_place__ = ['id', 'name', 'geoposition']
     __parameters_price__ = ['id', 'price_for_children', 'price_for_adult', 'price_for_enfant']
     __parameters_properties__ = ['id', 'name', 'image']
@@ -419,7 +421,7 @@ def groups(date, sight_id):
         return send_400_with_error(1)
     query = 'SELECT g.id, g.tour_date, g.seats_reserved, g.guide_id, g.seats_capacity, e.id, e.name, e.description, ' \
             'e.capacity, e.average_rating, e.duration, e.link_to_site, e.images, ' \
-            'c.*, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.icon), s.id, s.name, o.* ' \
+            'c.id, c.name, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.icon), s.id, s.name, o.*, c.icon ' \
             'FROM groups g ' \
             'LEFT JOIN excursions e ' \
             'ON g.excursion_id = e.id ' \
@@ -446,7 +448,8 @@ def groups(date, sight_id):
     json_response = []
     for row in rows:
         json_category = {__parameters_category__[0]: row[13],
-                         __parameters_category__[1]: row[14]}
+                         __parameters_category__[1]: row[14],
+                         __parameters_category__[2]: row[33]}
         json_price = {__parameters_price__[0]: row[15],
                       __parameters_price__[1]: row[16],
                       __parameters_price__[2]: row[17],
