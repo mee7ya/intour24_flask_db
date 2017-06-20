@@ -64,7 +64,7 @@ def check_date_by_format(format, str_check):
         return 1
 
 
-def check_phone(phone):
+def is_valid_phone(phone):
     if phone != '' and phone is not None:
         if phone.isdigit():
             if len(phone) > 20:
@@ -688,7 +688,7 @@ def payments_add():
 
 @app.route('/checkPhone/<phone>')
 def check_phone(phone):
-    phone_code = check_phone(phone)
+    phone_code = is_valid_phone(phone)
     if phone_code != -1:
         return send_400_with_error(phone_code)
     query = "SELECT id FROM tourists WHERE phone = %s"
@@ -730,7 +730,7 @@ def send_sms(code, phone):
 def registration():
     name = request.form.get('name')
     phone = request.form.get('phone')
-    phone_code = check_phone(phone)
+    phone_code = is_valid_phone(phone)
     if phone_code != -1:
         return send_400_with_error(phone_code)
     if name != '' and name is not None:
@@ -772,7 +772,7 @@ def update_tourist():
     c_id_code = id_checker(c_id)
     if c_id_code != -1:
         return send_400_with_error(c_id_code)
-    phone_code = check_phone(phone)
+    phone_code = is_valid_phone(phone)
     if phone_code != -1:
         return send_400_with_error(phone_code)
     if name == '' or name is None:
