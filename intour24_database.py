@@ -50,14 +50,31 @@ class Database:
         cursor.execute(query)
         return cursor.fetchall()
 
+    def select_custom_query_with_params(self, query, params):
+        cursor = self.db.cursor()
+        cursor.execute(query, params)
+        return cursor.fetchall()
+
     def update_insert_custom_query(self, query):
         cursor = self.db.cursor()
         cursor.execute(query)
         self.db.commit()
         return cursor.fetchone()[0]
 
+    def update_insert_custom_query_with_params(self, query, params):
+        cursor = self.db.cursor()
+        cursor.execute(query, params)
+        self.db.commit()
+        return cursor.fetchone()[0]
+
     def update_insert_custom_query_if_not_exists(self, query):
         cursor = self.db.cursor()
         cursor.execute(query)
+        self.db.commit()
+        return cursor.fetchone()
+
+    def update_insert_custom_query_if_not_exists_with_params(self, query, params):
+        cursor = self.db.cursor()
+        cursor.execute(query, params)
         self.db.commit()
         return cursor.fetchone()

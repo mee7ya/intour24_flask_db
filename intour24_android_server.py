@@ -1,14 +1,18 @@
+import requests
 from flask import Flask, url_for, request, json, Response
 from nikita_first_python_program import convert
-from apscheduler.schedulers.blocking import BlockingScheduler
 import datetime
 import intour24_database
+import random
+import os
 
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 app.config['JSON_AS_ASCII'] = False
-schedule = BlockingScheduler()
+SMS_URL = 'https://sms.ru/sms/'
+SMS_API = '1F5F1DF2-3C6B-D268-A754-75F38D147E70'
+__directory__ = os.path.dirname(os.path.realpath(__file__));
 
 
 def send_400_with_error(error):
@@ -34,6 +38,21 @@ def id_checker(id):
     else:
         return 1
 
+
+def id_checker_accept_zero(id):
+    if id != '' and id is not None:
+        if id.isdigit():
+            return -1
+        else:
+            try:
+                if int(id) < 0:
+                    return 6
+            except ValueError:
+                return 5
+    else:
+        return 1
+
+
 def check_date_by_format(format, str_check):
     if str_check != '' and str_check is not None:
         try:
@@ -44,6 +63,19 @@ def check_date_by_format(format, str_check):
     else:
         return 1
 
+
+def check_phone(phone):
+    if phone != '' and phone is not None:
+        if phone.isdigit():
+            if len(phone) > 20:
+                return 6
+            return -1
+        else:
+            return 5
+    else:
+        return 1
+
+
 @app.route('/excursion/<id>')
 def excursion(id):
     id_code = id_checker(id)
@@ -52,28 +84,9 @@ def excursion(id):
     __parameters__ = ['id', 'name', 'description', 'duration', 'priceForChildren', 'priceForAdult',
                       'priceForEnfant', 'pickingPlace', 'category', 'rating', 'properties',
                       'images', 'phone', 'address', 'logo', 'accreditation', 'capacity', 'linkToSite', 'icon']
-    query = 'SELECT e.id, e.name, e.description, e.duration, p.price_for_children, p.price_for_adult, ' \
-            'p.price_for_enfant, pp.name, c.name, ' \
-            'e.average_rating, array_agg(DISTINCT ep.name), e.images, p.id, pp.id, c.id, array_agg(DISTINCT ep.id), ' \
-            'o.id, o.name, o.phone, o.address, o.logo, o.accreditation, e.capacity, e.link_to_site, ' \
-            'array_agg(DISTINCT ep.icon), c.icon ' \
-            'FROM excursions e ' \
-            'LEFT JOIN prices p ' \
-            'ON e.price_id = p.id ' \
-            'LEFT JOIN picking_places pp ' \
-            'ON e.picking_place_id = pp.id ' \
-            'LEFT JOIN category c ' \
-            'ON e.category_id = c.id ' \
-            'LEFT JOIN excursions_excursion_property eep ' \
-            'ON e.id = eep.excursion_id ' \
-            'LEFT JOIN excursion_property ep ' \
-            'ON ep.id = eep.excursion_property_id ' \
-            'LEFT JOIN operator o ' \
-            'ON o.id = e.operator_id ' \
-            'WHERE e.id =  ' + id + \
-            'GROUP BY e.id, p.price_for_children, p.price_for_adult, p.price_for_enfant, p.id, pp.id, c.id, ' \
-            'pp.name, e.average_rating, c.name, o.id;'
-    rows = db.select_custom_query(query=query);
+    sql_file = open(os.path.join(__directory__, 'sql/excursion_by_id.sql'), 'r')
+    rows = db.select_custom_query_with_params(sql_file.read(), (id,));
+    sql_file.close()
     if rows:
         json_price = {__parameters__[0]: rows[0][12],
                       __parameters__[4]: rows[0][4],
@@ -123,7 +136,9 @@ def excursions():
                       'rating', 'duration', 'categoryId', 'startPlaceId', 'operatorId', 'linkToSite', 'images',
                       'priceId']
     __table__ = 'excursions'
-    rows = db.select_query(table=__table__)
+    sql_file = open(os.path.join(__directory__, 'sql/excursions.sql'), 'r')
+    rows = db.select_custom_query(sql_file.read())
+    sql_file.close()
     json_response = []
     for row in rows:
         json_response.append({__parameters__[0]: row[0],
@@ -150,16 +165,9 @@ def sight(id):
     if id_code != -1:
         return send_400_with_error(id_code)
     __parameters__ = ['id', 'name', 'geoposition', 'images', 'description', 'cover', 'properties', 'excursions']
-    query = 'SELECT s.*, array_agg(DISTINCT sp.name), array_agg(DISTINCT sp.image) ' \
-            'FROM sights s ' \
-            'LEFT JOIN sights_sight_property ssp ' \
-            'ON s.id = ssp.sight_id ' \
-            'LEFT JOIN sight_property sp ' \
-            'ON ssp.sight_property_id = sp.id ' \
-            'WHERE s.id = ' + id + \
-            'GROUP BY s.id ' \
-            'ORDER BY s.id;'
-    rows = db.select_custom_query(query=query)
+    sql_file = open(os.path.join(__directory__, 'sql/sight_by_id.sql'), 'r')
+    rows = db.select_custom_query_with_params(sql_file.read(), (id,))
+    sql_file.close()
     properties = []
     if rows:
         for i in range(0, len(rows[0][6])):
@@ -308,10 +316,10 @@ def groups(date, sight_id):
             "ON s.id = es.sight_id " \
             "LEFT JOIN operator o " \
             "ON e.operator_id = o.id " \
-            "WHERE g.tour_date::date = '"+date+"' AND s.id = "+sight_id + \
+            "WHERE g.tour_date::date = %s AND s.id = %s " \
             "GROUP BY g.id, e.id, c.id, p.id, pp.id, s.id, o.id " \
             "ORDER BY g.id;"
-    rows = db.select_custom_query(query=query)
+    rows = db.select_custom_query_with_params(query, (date, sight_id))
     json_response = []
     for row in rows:
         json_category = {__parameters_category__[0]: row[13],
@@ -399,10 +407,10 @@ def group(id):
             'ON s.id = es.sight_id ' \
             'LEFT JOIN operator o ' \
             'ON o.id = e.operator_id ' \
-            'WHERE g.id = '+id+' ' \
+            'WHERE g.id = %s ' \
             'GROUP BY g.id, e.id, c.id, p.id, pp.id, s.id, o.id ' \
             'ORDER BY g.id;'
-    rows = db.select_custom_query(query=query)
+    rows = db.select_custom_query_with_params(query, (id,))
     if rows:
         for row in rows:
             json_category = {__parameters_category__[0]: row[13],
@@ -467,34 +475,37 @@ def bookings_add():
     if tourist_id_code != -1:
         return send_400_with_error(tourist_id_code)
     adults = request.form.get('adults')
-    adults_code = id_checker(adults)
+    adults_code = id_checker_accept_zero(adults)
     if adults_code != -1:
         return send_400_with_error(adults_code)
     children = request.form.get('children')
-    children_code = id_checker(children)
+    children_code = id_checker_accept_zero(children)
     if children_code != -1:
         return send_400_with_error(children_code)
     enfants = request.form.get('enfants')
-    enfants_code = id_checker(enfants)
+    enfants_code = id_checker_accept_zero(enfants)
     if enfants_code != -1:
         return send_400_with_error(enfants_code)
     create_datetime = request.form.get('createDatetime')
     create_datetime_code = check_date_by_format('%Y-%m-%d %H:%M:%S', create_datetime)
     if create_datetime_code != -1:
         return send_400_with_error(create_datetime_code)
-    total_price = request.form.get('total_price')
-    query = "SELECT seats_reserved, seats_capacity FROM groups WHERE id="+group_id
-    rows = db.select_custom_query(query)
+    total_price = request.form.get('totalPrice')
+    total_price_code = id_checker(total_price)
+    if total_price_code != -1:
+        return send_400_with_error(total_price_code)
+    query = "SELECT seats_reserved, seats_capacity FROM groups WHERE id=%s"
+    rows = db.select_custom_query_with_params(query, (group_id,))
     if rows:
         people_reserved = int(rows[0][0]) + int(children) + int(adults) + int(enfants)
         people_capacity = int(rows[0][1])
         if int(people_reserved) <= int(people_capacity):
             query = "INSERT INTO bookings(tourist_id, group_id, adults, children, " \
                     "enfants, total_price, create_datetime, is_cancelled) " \
-                    "VALUES ("+tourist_id+", "+group_id+", "+adults+", "+children+", "+\
-                    enfants+", "+total_price+", '"+create_datetime+"', 0) " \
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, 0) " \
                     "RETURNING id; "
-            c_id = db.update_insert_custom_query(query)
+            c_id = db.update_insert_custom_query_with_params(query, (tourist_id, group_id, adults, children,
+                                                                     enfants, total_price, create_datetime))
             if people_capacity == people_reserved:
                 json_response = {'status': 'OK',
                                  'full': 1,
@@ -517,141 +528,127 @@ def bookings_add():
 
 @app.route('/bookingsByTouristId/<tourist_id>')
 def bookings(tourist_id):
-    if tourist_id is not None and tourist_id != '':
-        if tourist_id.isdigit():
-            if int(tourist_id) == 0:
-                return send_400_with_error(6)
-            __parameters_booking__ = ['id', 'excursion', 'totalPrice', 'paymentId', 'group', 'isCancelled']
-            __parameters_excursion__ = ['id', 'name', 'pickingPlace', 'duration', 'operator']
-            __parameters_picking_place__ = ['id', 'name']
-            __parameters_group__ = ['id', 'tourDate']
-            __parameters_operator__ = ['id', 'name', 'phone', 'address', 'logo', 'accreditation', 'email']
-            query = "SELECT b.id, b.total_price, p.id, e.id, e.name, e.duration, pp.id, pp.name, g.id, g.tour_date, " \
-                    "b.is_cancelled, o.id, o.name, o.phone, o.address, o.logo, o.accreditation, o.email " \
-                    "FROM bookings b " \
-                    "LEFT JOIN payments p " \
-                    "ON b.id = p.booking_id " \
-                    "LEFT JOIN groups g " \
-                    "ON b.group_id = g.id " \
-                    "LEFT JOIN excursions e " \
-                    "ON g.excursion_id = e.id " \
-                    "LEFT JOIN picking_places pp " \
-                    "ON e.picking_place_id = pp.id " \
-                    "LEFT JOIN operator o " \
-                    "ON o.id = e.operator_id " \
-                    "WHERE b.tourist_id =  " +tourist_id + \
-                    "GROUP BY b.id, p.id, pp.id, g.id, e.id, o.id " \
-                    "ORDER BY b.id "
-            rows = db.select_custom_query(query)
-            if rows:
-                json_response = []
-                for row in rows:
-                    json_picking_place = {__parameters_picking_place__[0]: row[6],
-                                          __parameters_picking_place__[1]: row[7]}
-                    json_group = {__parameters_group__[0]: row[8],
-                                  __parameters_group__[1]: str(row[9])}
-                    json_operator = {__parameters_operator__[0]: row[11],
-                                     __parameters_operator__[1]: row[12],
-                                     __parameters_operator__[2]: row[13],
-                                     __parameters_operator__[3]: row[14],
-                                     __parameters_operator__[4]: row[15],
-                                     __parameters_operator__[5]: row[16],
-                                     __parameters_operator__[6]: row[17]}
-                    json_excursion = {__parameters_excursion__[0]: row[3],
-                                      __parameters_excursion__[1]: row[4],
-                                      __parameters_excursion__[2]: json_picking_place,
-                                      __parameters_excursion__[3]: convert(row[5]),
-                                      __parameters_excursion__[4]: json_operator}
-                    json_response.append({__parameters_booking__[0]: row[0],
-                                          __parameters_booking__[1]: json_excursion,
-                                          __parameters_booking__[2]: row[1],
-                                          __parameters_booking__[3]: row[2],
-                                          __parameters_booking__[4]: json_group,
-                                          __parameters_booking__[5]: row[10]})
-                json_response = json.dumps(json_response)
-                response = Response(json_response, content_type='application/json; charset=utf-8')
-                return response
-            else:
-                return send_400_with_error(2)
-        try:
-            if int(tourist_id) < 0:
-                return send_400_with_error(6)
-        except ValueError:
-            return send_400_with_error(5)
-    return send_400_with_error(1)
+    tourist_id_code = id_checker(tourist_id)
+    if tourist_id_code != -1:
+        return send_400_with_error(tourist_id_code)
+    __parameters_booking__ = ['id', 'excursion', 'totalPrice', 'paymentId', 'group', 'isCancelled']
+    __parameters_excursion__ = ['id', 'name', 'pickingPlace', 'duration', 'operator']
+    __parameters_picking_place__ = ['id', 'name']
+    __parameters_group__ = ['id', 'tourDate']
+    __parameters_operator__ = ['id', 'name', 'phone', 'address', 'logo', 'accreditation', 'email']
+    query = "SELECT b.id, b.total_price, p.id, e.id, e.name, e.duration, pp.id, pp.name, g.id, g.tour_date, " \
+            "b.is_cancelled, o.id, o.name, o.phone, o.address, o.logo, o.accreditation, o.email " \
+            "FROM bookings b " \
+            "LEFT JOIN payments p " \
+            "ON b.id = p.booking_id " \
+            "LEFT JOIN groups g " \
+            "ON b.group_id = g.id " \
+            "LEFT JOIN excursions e " \
+            "ON g.excursion_id = e.id " \
+            "LEFT JOIN picking_places pp " \
+            "ON e.picking_place_id = pp.id " \
+            "LEFT JOIN operator o " \
+            "ON o.id = e.operator_id " \
+            "WHERE b.tourist_id = %s " \
+            "GROUP BY b.id, p.id, pp.id, g.id, e.id, o.id " \
+            "ORDER BY b.id "
+    rows = db.select_custom_query_with_params(query, (tourist_id,))
+    if rows:
+        json_response = []
+        for row in rows:
+            json_picking_place = {__parameters_picking_place__[0]: row[6],
+                                  __parameters_picking_place__[1]: row[7]}
+            json_group = {__parameters_group__[0]: row[8],
+                          __parameters_group__[1]: str(row[9])}
+            json_operator = {__parameters_operator__[0]: row[11],
+                             __parameters_operator__[1]: row[12],
+                             __parameters_operator__[2]: row[13],
+                             __parameters_operator__[3]: row[14],
+                             __parameters_operator__[4]: row[15],
+                             __parameters_operator__[5]: row[16],
+                             __parameters_operator__[6]: row[17]}
+            json_excursion = {__parameters_excursion__[0]: row[3],
+                              __parameters_excursion__[1]: row[4],
+                              __parameters_excursion__[2]: json_picking_place,
+                              __parameters_excursion__[3]: convert(row[5]),
+                              __parameters_excursion__[4]: json_operator}
+            json_response.append({__parameters_booking__[0]: row[0],
+                                  __parameters_booking__[1]: json_excursion,
+                                  __parameters_booking__[2]: row[1],
+                                  __parameters_booking__[3]: row[2],
+                                  __parameters_booking__[4]: json_group,
+                                  __parameters_booking__[5]: row[10]})
+        json_response = json.dumps(json_response)
+        response = Response(json_response, content_type='application/json; charset=utf-8')
+        return response
+    else:
+        return send_400_with_error(2)
 
 
 @app.route('/booking/<id>')
 def booking(id):
-    if id is not None:
-        if id.isdigit():
-            if int(id) == 0:
-                return send_400_with_error(6)
-            __parameters__ = ['id', 'adults', 'children', 'enfants', 'totalPrice', 'group']
-            __parameters_group__ = ['id', 'tourDate', 'excursion']
-            __parameters_excursion__ = ['id', 'name', 'duration', 'operator', 'pickingPlace', 'properties']
-            __parameters_picking_place__ = ['id', 'name', 'geoposition']
-            __parameters_properties__ = ['id', 'name', 'icon']
-            __parameters_operator__ = ['id', 'name', 'logo']
-            query = 'SELECT b.id, b.adults, b.children, b.enfants, b.total_price, g.id, g.tour_date, e.id, e.name, ' \
-                    'e.duration, o.id, o.name, o.logo, pp.id, pp.name, pp.geoposition, ' \
-                    'array_agg(ep.id), array_agg(ep.name), array_agg(ep.icon) ' \
-                    'FROM bookings b ' \
-                    'LEFT JOIN groups g ' \
-                    'ON g.id = b.group_id ' \
-                    'LEFT JOIN excursions e ' \
-                    'ON g.excursion_id = e.id ' \
-                    'LEFT JOIN operator o ' \
-                    'ON e.operator_id = o.id ' \
-                    'LEFT JOIN picking_places pp ' \
-                    'ON e.picking_place_id = pp.id ' \
-                    'LEFT JOIN excursions_excursion_property eep ' \
-                    'ON eep.excursion_id = e.id ' \
-                    'LEFT JOIN excursion_property ep ' \
-                    'ON eep.excursion_property_id = ep.id ' \
-                    'WHERE b.id = ' + id + \
-                    'GROUP BY b.id, g.id, e.id, o.id, pp.id ' \
-                    'ORDER BY b.id '
-            rows = db.select_custom_query(query)
-            if rows:
-                row = rows[0]
-                json_properties = []
-                for i in range(len(row[16])):
-                    json_properties.append({__parameters_properties__[0]: row[16][i],
-                                            __parameters_properties__[1]: row[17][i],
-                                            __parameters_properties__[2]: row[18][i]})
-                json_operator = {__parameters_operator__[0]: row[10],
-                                 __parameters_operator__[1]: row[11],
-                                 __parameters_operator__[2]: row[12]}
-                json_picking_place = {__parameters_picking_place__[0]: row[13],
-                                      __parameters_picking_place__[1]: row[14],
-                                      __parameters_picking_place__[2]: row[15]}
-                json_excursion = {__parameters_excursion__[0]: row[7],
-                                  __parameters_excursion__[1]: row[8],
-                                  __parameters_excursion__[2]: convert(row[9]),
-                                  __parameters_excursion__[3]: json_operator,
-                                  __parameters_excursion__[4]: json_picking_place,
-                                  __parameters_excursion__[5]: json_properties}
-                json_group = {__parameters_group__[0]: row[5],
-                              __parameters_group__[1]: str(row[6]),
-                              __parameters_group__[2]: json_excursion}
-                json_response = {__parameters__[0]: row[0],
-                                 __parameters__[1]: row[1],
-                                 __parameters__[2]: row[2],
-                                 __parameters__[3]: row[3],
-                                 __parameters__[4]: row[4],
-                                 __parameters__[5]: json_group}
-                json_response = json.dumps(json_response)
-                response = Response(json_response, content_type='application/json; charset=utf-8')
-                return response
-            else:
-                return send_400_with_error(2)
-        try:
-            if int(id) < 0:
-                return send_400_with_error(6)
-        except ValueError:
-            return send_400_with_error(5)
-    return send_400_with_error(1)
+        id_code = id_checker(id)
+        if id_code != -1:
+            return send_400_with_error(id_code)
+        __parameters__ = ['id', 'adults', 'children', 'enfants', 'totalPrice', 'group']
+        __parameters_group__ = ['id', 'tourDate', 'excursion']
+        __parameters_excursion__ = ['id', 'name', 'duration', 'operator', 'pickingPlace', 'properties']
+        __parameters_picking_place__ = ['id', 'name', 'geoposition']
+        __parameters_properties__ = ['id', 'name', 'icon']
+        __parameters_operator__ = ['id', 'name', 'logo']
+        query = 'SELECT b.id, b.adults, b.children, b.enfants, b.total_price, g.id, g.tour_date, e.id, e.name, ' \
+                'e.duration, o.id, o.name, o.logo, pp.id, pp.name, pp.geoposition, ' \
+                'array_agg(ep.id), array_agg(ep.name), array_agg(ep.icon) ' \
+                'FROM bookings b ' \
+                'LEFT JOIN groups g ' \
+                'ON g.id = b.group_id ' \
+                'LEFT JOIN excursions e ' \
+                'ON g.excursion_id = e.id ' \
+                'LEFT JOIN operator o ' \
+                'ON e.operator_id = o.id ' \
+                'LEFT JOIN picking_places pp ' \
+                'ON e.picking_place_id = pp.id ' \
+                'LEFT JOIN excursions_excursion_property eep ' \
+                'ON eep.excursion_id = e.id ' \
+                'LEFT JOIN excursion_property ep ' \
+                'ON eep.excursion_property_id = ep.id ' \
+                'WHERE b.id = %s ' \
+                'GROUP BY b.id, g.id, e.id, o.id, pp.id ' \
+                'ORDER BY b.id '
+        rows = db.select_custom_query_with_params(query, (id,))
+        if rows:
+            row = rows[0]
+            json_properties = []
+            for i in range(len(row[16])):
+                json_properties.append({__parameters_properties__[0]: row[16][i],
+                                        __parameters_properties__[1]: row[17][i],
+                                        __parameters_properties__[2]: row[18][i]})
+            json_operator = {__parameters_operator__[0]: row[10],
+                             __parameters_operator__[1]: row[11],
+                             __parameters_operator__[2]: row[12]}
+            json_picking_place = {__parameters_picking_place__[0]: row[13],
+                                  __parameters_picking_place__[1]: row[14],
+                                  __parameters_picking_place__[2]: row[15]}
+            json_excursion = {__parameters_excursion__[0]: row[7],
+                              __parameters_excursion__[1]: row[8],
+                              __parameters_excursion__[2]: convert(row[9]),
+                              __parameters_excursion__[3]: json_operator,
+                              __parameters_excursion__[4]: json_picking_place,
+                              __parameters_excursion__[5]: json_properties}
+            json_group = {__parameters_group__[0]: row[5],
+                          __parameters_group__[1]: str(row[6]),
+                          __parameters_group__[2]: json_excursion}
+            json_response = {__parameters__[0]: row[0],
+                             __parameters__[1]: row[1],
+                             __parameters__[2]: row[2],
+                             __parameters__[3]: row[3],
+                             __parameters__[4]: row[4],
+                             __parameters__[5]: json_group}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        else:
+            return send_400_with_error(2)
 
 
 @app.route('/payments/', methods=['POST'])
@@ -659,64 +656,85 @@ def payments_add():
     booking_id = request.form.get('bookingId')
     payment_time = request.form.get('paymentTime')
     identifier = request.form.get('identifier')
-    if booking_id != '' and payment_time != '' and identifier != '' and booking_id is not None and \
-                    payment_time is not None and identifier is not None:
-        try:
-            datetime.datetime.strptime(payment_time, '%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            return send_400_with_error(4)
-        try:
-            if int(booking_id) <= 0:
-                return send_400_with_error(6)
-        except ValueError:
-            return send_400_with_error(5)
-        query = "INSERT INTO payments (booking_id, create_datetime, is_cancelled, is_refund) " \
-                "SELECT '"+booking_id+"', '"+payment_time+"', 0, 0 " \
-                "WHERE NOT EXISTS (SELECT booking_id FROM payments WHERE booking_id = '" + booking_id + "') " \
+    booking_id_code = id_checker(booking_id)
+    if booking_id_code != -1:
+        return send_400_with_error(booking_id_code)
+    payment_time_code = check_date_by_format('%Y-%m-%d %H:%M:%S', payment_time)
+    if payment_time_code != -1:
+        return send_400_with_error(payment_time_code)
+    if identifier == '' or identifier is None:
+        return send_400_with_error(1)
+    query = "SELECT id FROM bookings WHERE id = %s"
+    rows = db.select_custom_query_with_params(query, (booking_id,))
+    if rows:
+        query = "INSERT INTO payments (booking_id, create_datetime, identifier, is_cancelled, is_refund) " \
+                "SELECT %s, %s, %s, 0, 0 " \
+                "WHERE NOT EXISTS (SELECT booking_id FROM payments WHERE booking_id = %s) " \
                 "RETURNING id;"
-        c_id = db.update_insert_custom_query_if_not_exists(query)
+        c_id = db.update_insert_custom_query_if_not_exists_with_params(query, (booking_id, payment_time,
+                                                                               identifier, booking_id))
         if c_id:
             json_response = {'status': "OK",
                              'paymentId': c_id[0],
                              'createDatetime': payment_time}
         else:
-            return send_400_with_error(7)
+            return send_400_with_error(3)
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response
     else:
-        return send_400_with_error(1)
+        return send_400_with_error(2)
 
 
 @app.route('/checkPhone/<phone>')
 def check_phone(phone):
-    if phone != '' and phone is not None:
-        if phone.isdigit():
-            if len(phone) > 20 and len(phone) > 8:
-                return send_400_with_error(6)
-            query = "SELECT id FROM tourists WHERE phone='"+phone+"' "
-            rows = db.select_custom_query(query)
-            if rows:
-                json_response = {"status": "OK",
-                                 "registered": 1}
-            else:
-                json_response = {"status": "OK",
-                                 "registered": 0}
-            json_response = json.dumps(json_response)
-            response = Response(json_response, content_type='application/json; charset=utf-8')
-            return response
-        else:
-            return send_400_with_error(5)
+    phone_code = check_phone(phone)
+    if phone_code != -1:
+        return send_400_with_error(phone_code)
+    query = "SELECT id FROM tourists WHERE phone = %s"
+    rows = db.select_custom_query_with_params(query, (phone,))
+    if rows:
+        code = generate_code()
+        if send_sms(code, phone):
+            json_response = {"status": "OK",
+                             "registered": 1,
+                             "code": code}
     else:
-        return send_400_with_error(1)
+        json_response = {"status": "OK",
+                         "registered": 0}
+    json_response = json.dumps(json_response)
+    response = Response(json_response, content_type='application/json; charset=utf-8')
+    return response
+
+
+def generate_code():
+    ORDER_NUMBER = 6
+    code = str(random.randint(1, 999999))  # ORDER_NUMBER of 999999 = 6
+    if len(code) < ORDER_NUMBER:
+        code = "0" * (ORDER_NUMBER - len(code)) + code
+    return code
+
+
+def send_sms(code, phone):
+    response = requests.get(SMS_URL + 'send?api_id=' + SMS_API + '&to='
+                            + phone + '&msg='
+                            + code + '&json=1')
+    print(code)
+    if response.json()['sms'][phone]['status'] == 'OK':
+        return True
+    else:
+        return False
 
 
 @app.route('/registration', methods=['POST'])
 def registration():
     name = request.form.get('name')
     phone = request.form.get('phone')
-    if name != '' and phone != '' and name != None and phone != None:
-        if len(name) > 60 or len(phone) > 20:
+    phone_code = check_phone(phone)
+    if phone_code != -1:
+        return send_400_with_error(phone_code)
+    if name != '' and name is not None:
+        if len(name) > 60:
             return send_400_with_error(6)
         if phone.isdigit():
             query = "INSERT INTO tourists (first_name, phone) " \
@@ -725,13 +743,18 @@ def registration():
                     "RETURNING id;"
             c_id = db.update_insert_custom_query_if_not_exists(query)
             if c_id is not None:
+                code = generate_code()
+                send_sms(code, phone)
                 json_response = {"status": "OK",
-                                 "id": +c_id[0]}
-                json_response = json.dumps(json_response)
-                response = Response(json_response, content_type='application/json; charset=utf-8')
-                return response
+                                 "id": +c_id[0],
+                                 "code": code}
             else:
-                return send_400_with_error(3)
+                json_response = {"status": "ERROR",
+                                 "id": 0,
+                                 "code": 0}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
         else:
             try:
                 if int(phone) < 0:
@@ -746,203 +769,142 @@ def update_tourist():
     c_id = request.form.get('id')
     name = request.form.get('name')
     phone = request.form.get('phone')
-    if c_id != '' and name != '' and phone != '' and c_id is not None and name is not None and phone is not None:
-        if len(name) > 60 or len(phone) > 20:
+    c_id_code = id_checker(c_id)
+    if c_id_code != -1:
+        return send_400_with_error(c_id_code)
+    phone_code = check_phone(phone)
+    if phone_code != -1:
+        return send_400_with_error(phone_code)
+    if name == '' or name is None:
+        if len(name) > 60:
             return send_400_with_error(6)
-        try:
-            if int(c_id) <= 0 or int(phone) <= 0:
-                return send_400_with_error(6)
-        except ValueError:
-            return send_400_with_error(5)
-        query = "UPDATE tourists SET first_name = '"+name+"', phone = '"+phone+"' WHERE id="+c_id+"RETURNING id;"
-        c_id = db.update_insert_custom_query_if_not_exists(query)
-        if c_id is not None:
-            json_response = {"status": "OK",
-                             "id": c_id[0]}
-            json_response = json.dumps(json_response)
-            response = Response(json_response, content_type='application/json; charset=utf-8')
-            return response
-        else:
-            return send_400_with_error(2)
-    return send_400_with_error(1)
+        return send_400_with_error(1)
+    query = "UPDATE tourists SET first_name = %s, phone = %s WHERE id = %s RETURNING id;"
+    c_id = db.update_insert_custom_query_if_not_exists_with_params(query, (name, phone, c_id))
+    if c_id is not None:
+        json_response = {"status": "OK",
+                         "id": c_id[0]}
+        json_response = json.dumps(json_response)
+        response = Response(json_response, content_type='application/json; charset=utf-8')
+        return response
+    else:
+        return send_400_with_error(2)
 
 
 @app.route('/cancelPayment', methods=['PUT'])
 def cancel_payment():
-    booking_id = request.form.get('booking_id')
+    booking_id = request.form.get('bookingId')
     cancelled_datetime = request.form.get('cancelledDatetime')
-    if booking_id != '' and booking_id is not None:
-        try:
-            datetime.datetime.strptime(cancelled_datetime, '%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            return  send_400_with_error(4)
-        if booking_id.isdigit():
-            if int(booking_id) == 0:
-                return send_400_with_error(6)
-            query = "SELECT id FROM payments WHERE booking_id = "+booking_id+" AND is_cancelled = 1"
-            rows = db.select_custom_query(query)
-            if not rows:
-                query = "UPDATE payments SET is_cancelled = 1, cancelled_datetime = '"+cancelled_datetime+"' WHERE booking_id = "+booking_id+" RETURNING id"
-                payment_id = db.update_insert_custom_query_if_not_exists(query)
-                if payment_id is not None:
-                    query = "UPDATE bookings SET is_cancelled = 1, update_datetime = '"+cancelled_datetime+"' WHERE id = "+booking_id+" RETURNING id"
-                    booking_id = db.update_insert_custom_query_if_not_exists(query)
-                    json_response = {"status": "OK",
-                                     "paymentId": payment_id[0],
-                                     "bookingId": booking_id[0]}
-                    json_response = json.dumps(json_response)
-                    response = Response(json_response, content_type='application/json; charset=utf-8')
-                    return response
-                send_400_with_error(2)
-            else:
-                send_400_with_error(3)
-        else:
-            try:
-                if int(booking_id) < 0:
-                    return send_400_with_error(6)
-            except ValueError:
-                return send_400_with_error(5)
-    return send_400_with_error(1)
+    booking_id_code = id_checker(booking_id)
+    if booking_id_code != -1:
+        return send_400_with_error(booking_id_code)
+    cancelled_datetime_code = check_date_by_format('%Y-%m-%d %H:%M:%S', cancelled_datetime)
+    if cancelled_datetime_code != -1:
+        return send_400_with_error(cancelled_datetime_code)
+    query = "SELECT id FROM payments WHERE booking_id = %s AND is_cancelled = 1"
+    rows = db.select_custom_query_with_params(query, (booking_id,))
+    if not rows:
+        query = "UPDATE payments SET is_cancelled = 1, cancelled_datetime = %s WHERE booking_id = %s RETURNING id"
+        payment_id = db.update_insert_custom_query_if_not_exists_with_params(query, (cancelled_datetime, booking_id))
+        if payment_id is not None:
+            query = "UPDATE bookings SET is_cancelled = 1, update_datetime = %s WHERE id = %s RETURNING id"
+            booking_id = db.update_insert_custom_query_if_not_exists_with_params(query, (cancelled_datetime, booking_id))
+            json_response = {"status": "OK",
+                             "paymentId": payment_id[0],
+                             "bookingId": booking_id[0]}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        send_400_with_error(2)
+    else:
+        send_400_with_error(3)
 
 
 @app.route('/paymentByBookingId/<id>')
 def payment_by_booking_id(id):
-    if id != '' and id is not None:
-        try:
-            if int(id) <= 0:
-                return send_400_with_error(6)
-        except ValueError:
-            return send_400_with_error(5)
-        __parameters_payment__ = ['id', 'bookingId', 'createDatetime', 'cancelledDatetime',
-                                  'refundDatetime', 'isCancelled', 'isRefund', 'identifier']
-        query = "SELECT * FROM payments WHERE booking_id="+id
-        rows = db.select_custom_query(query)
-        if rows:
-            row = rows[0]
-            formatted_create_datetime = None
-            formatted_cancel_datetime = None
-            formatted_refund_datetime = None
-            if row[2] is not None:
-                formatted_create_datetime = str(row[2])
-            if row[3] is not None:
-                formatted_cancel_datetime = str(row[3])
-            if row[4] is not None:
-                formatted_refund_datetime = str(row[4])
-            json_response = {__parameters_payment__[0]: row[0],
-                             __parameters_payment__[1]: row[1],
-                             __parameters_payment__[2]: formatted_create_datetime,
-                             __parameters_payment__[3]: formatted_cancel_datetime,
-                             __parameters_payment__[4]: formatted_refund_datetime,
-                             __parameters_payment__[5]: row[5],
-                             __parameters_payment__[6]: row[6],
-                             __parameters_payment__[7]: row[7]}
-            json_response = json.dumps(json_response)
-            response = Response(json_response, content_type='application/json; charset=utf-8')
-            return response
-        else:
-            return send_400_with_error(2)
+    id_code = id_checker(id)
+    if id_code != -1:
+        return send_400_with_error(id_code)
+    __parameters_payment__ = ['id', 'bookingId', 'createDatetime', 'cancelledDatetime',
+                              'refundDatetime', 'isCancelled', 'isRefund', 'identifier']
+    query = "SELECT * FROM payments WHERE booking_id= %s"
+    rows = db.select_custom_query_with_params(query, (id,))
+    if rows:
+        row = rows[0]
+        formatted_create_datetime = None
+        formatted_cancel_datetime = None
+        formatted_refund_datetime = None
+        if row[2] is not None:
+            formatted_create_datetime = str(row[2])
+        if row[3] is not None:
+            formatted_cancel_datetime = str(row[3])
+        if row[4] is not None:
+            formatted_refund_datetime = str(row[4])
+        json_response = {__parameters_payment__[0]: row[0],
+                         __parameters_payment__[1]: row[1],
+                         __parameters_payment__[2]: formatted_create_datetime,
+                         __parameters_payment__[3]: formatted_cancel_datetime,
+                         __parameters_payment__[4]: formatted_refund_datetime,
+                         __parameters_payment__[5]: row[5],
+                         __parameters_payment__[6]: row[6],
+                         __parameters_payment__[7]: row[7]}
+        json_response = json.dumps(json_response)
+        response = Response(json_response, content_type='application/json; charset=utf-8')
+        return response
     else:
-        return send_400_with_error(1)
+        return send_400_with_error(2)
 
 
 @app.route('/refundPayment', methods=['PUT'])
 def refund_payment():
     id = request.form.get('id')
-    if id != '' and id is not None:
-        try:
-            if int(id) <= 0:
-                return send_400_with_error(6)
-        except ValueError:
-            return send_400_with_error(5)
-        query = "SELECT id FROM payments WHERE id = "+id+" AND is_refund = 1"
-        db_response = db.select_custom_query(query)
+    id_code = id_checker(id)
+    if id_code != -1:
+        return send_400_with_error(id_code)
+    query = "SELECT id FROM payments WHERE id = %s AND is_refund = 1"
+    db_response = db.select_custom_query_with_params(query, (id,))
+    if db_response:
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        query = "UPDATE payments SET is_refund = 1, refund_datetime = %s WHERE id = %s RETURNING id, refund_datetime;"
+        db_response = db.update_insert_custom_query_if_not_exists_with_params(query, (date_time, id))
         if db_response:
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            query = "UPDATE payments SET is_refund = 1, refund_datetime = '"+date_time+"' WHERE id = "+id+" RETURNING id, refund_datetime;"
-            db_response = db.update_insert_custom_query_if_not_exists(query)
-            if db_response:
-                json_response = {"status": "OK",
-                                 "id": db_response[0],
-                                 "refundDatetime": str(db_response[1])}
-                json_response = json.dumps(json_response)
-                response = Response(json_response, content_type='application/json; charset=utf-8')
-                return response
-            else:
-                return send_400_with_error(2)
+            json_response = {"status": "OK",
+                             "id": db_response[0],
+                             "refundDatetime": str(db_response[1])}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
         else:
-            return send_400_with_error(3)
+            return send_400_with_error(2)
     else:
-        return send_400_with_error(1)
-
-
-# @app.route('/payment')
-# def payment_upd():
-#     id = request.form.get('id')
-#     booking_id = request.form.get('booking_id')
-#     create_datetime = request.form.get('create_datetime')
-#     cancelled_datetime = request.form.get('cancelled_datetime')
-#     refund_datetime = request.form.get('refund_datetime')
-#     identifier = request.form.get('identifier')
-#     is_cancelled = request.form.get('is_cancelled')
-#     is_refund = request.form.get('is_refund')
-#     if id != '' and booking_id != '' and create_datetime != '' and cancelled_datetime != '' and refund_datetime != '' \
-#         and identifier != '' and is_cancelled != '' and is_refund != '' and id is not None and booking_id is not None \
-#         and create_datetime is not None and cancelled_datetime is not None and refund_datetime is not None and \
-#         identifier is not None and is_cancelled is not None and is_refund is not None:
-#         try:
-#             datetime.datetime.strptime(create_datetime, '%Y-%m-%d %H:%M:%S')
-#             datetime.datetime.strptime(cancelled_datetime, '%Y-%m-%d %H:%M:%S')
-#             datetime.datetime.strptime(refund_datetime, '%Y-%m-%d %H:%M:%S')
-#         except ValueError:
-#             return send_400_with_error(4)
-#         try:
-#             if int(id) <= 0 or int(booking_id) <= 0 or int(is_cancelled) < 0 or int(is_cancelled) > 1 \
-#                 or int(is_refund) < 0 or int(is_refund) > 1:
-#                 return send_400_with_error(6)
-#         except ValueError:
-#             return send_400_with_error(5)
-#         query =
-#     else:
-#         return send_400_with_error(1)
+        return send_400_with_error(3)
 
 
 @app.route('/cancelBooking', methods=['PUT'])
 def cancel_booking():
     id = request.form.get('id')
     cancelled_datetime = request.form.get('cancelledDatetime')
-    if id != '' and cancelled_datetime != '' and id is not None and cancelled_datetime is not None:
-        try:
-            datetime.datetime.strptime(cancelled_datetime, '%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            return send_400_with_error(4)
-        try:
-            if int(id) <= 0:
-                return send_400_with_error(6)
-        except ValueError:
-            return send_400_with_error(5)
-        query = "UPDATE bookings SET is_cancelled = 1, update_datetime = '"+cancelled_datetime+"' WHERE id="+id+" RETURNING id"
-        c_id = db.update_insert_custom_query_if_not_exists(query)
-        if c_id:
-            json_response = {'status': 'OK',
-                             'id': c_id[0]}
-            json_response = json.dumps(json_response)
-            response = Response(json_response, content_type='application/json; charset=utf-8')
-            return response
-        else:
-            return send_400_with_error(2)
+    id_code = id_checker(id)
+    if id_code != -1:
+        return send_400_with_error(id_code)
+    cancelled_datetime_code = check_date_by_format('%Y-%m-%d %H:%M:%S', cancelled_datetime)
+    if cancelled_datetime_code != -1:
+        return send_400_with_error(cancelled_datetime_code)
+    query = "UPDATE bookings SET is_cancelled = 1, update_datetime = %s WHERE id = %s RETURNING id"
+    c_id = db.update_insert_custom_query_if_not_exists_with_params(query, (cancelled_datetime, id))
+    if c_id:
+        json_response = {'status': 'OK',
+                         'id': c_id[0]}
+        json_response = json.dumps(json_response)
+        response = Response(json_response, content_type='application/json; charset=utf-8')
+        return response
     else:
-        return send_400_with_error(1)
+        return send_400_with_error(2)
 
 
 @app.route('/favicon.ico')
 def favicon():
     return url_for('static', filename='favicon.ico')
-
-
-# @schedule.scheduled_job('cron', day_of_week='mon-sun', hour=2)
-# def scheduled_\job():
-# TODO: add parser execution here
-# print('This job is run every day at 2am.')
 
 
 db = intour24_database.Database()
