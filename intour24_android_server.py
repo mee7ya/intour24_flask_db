@@ -503,20 +503,22 @@ def bookings_add():
             query = "INSERT INTO bookings(tourist_id, group_id, adults, children, " \
                     "enfants, total_price, create_datetime, is_cancelled) " \
                     "VALUES (%s, %s, %s, %s, %s, %s, %s, 0) " \
-                    "RETURNING id; "
-            c_id = db.update_insert_custom_query_with_params(query, (tourist_id, group_id, adults, children,
+                    "RETURNING id, create_datetime; "
+            c_id = db.update_insert_custom_query_if_not_exists_with_params(query, (tourist_id, group_id, adults, children,
                                                                      enfants, total_price, create_datetime))
             if people_capacity == people_reserved:
                 json_response = {'status': 'OK',
                                  'full': 1,
-                                 'id': c_id}
+                                 'id': c_id[0],
+                                 'created': str(c_id[1])}
                 json_response = json.dumps(json_response)
                 response = Response(json_response, content_type='application/json; charset=utf-8')
                 return response
             else:
                 json_response = {'status': 'OK',
                                 'full': 0,
-                                'id': c_id}
+                                'id': c_id[0],
+                                'created': str(c_id[1])}
                 json_response = json.dumps(json_response)
                 response = Response(json_response, content_type='application/json; charset=utf-8')
                 return response
