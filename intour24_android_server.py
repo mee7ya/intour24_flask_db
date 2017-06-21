@@ -539,7 +539,7 @@ def bookings(tourist_id):
     __parameters_group__ = ['id', 'tourDate']
     __parameters_operator__ = ['id', 'name', 'phone', 'address', 'logo', 'accreditation', 'email']
     query = "SELECT b.id, b.total_price, p.id, e.id, e.name, e.duration, pp.id, pp.name, g.id, g.tour_date, " \
-            "b.is_cancelled, o.id, o.name, o.phone, o.address, o.logo, o.accreditation, o.email " \
+            "b.is_cancelled, o.id, o.name, o.phone, o.address, o.logo, o.accreditation, o.email, b.create_datetime " \
             "FROM bookings b " \
             "LEFT JOIN payments p " \
             "ON b.id = p.booking_id " \
@@ -579,7 +579,8 @@ def bookings(tourist_id):
                                   __parameters_booking__[2]: row[1],
                                   __parameters_booking__[3]: row[2],
                                   __parameters_booking__[4]: json_group,
-                                  __parameters_booking__[5]: row[10]})
+                                  __parameters_booking__[5]: row[10],
+                                  'created': str(row[18])})
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response
