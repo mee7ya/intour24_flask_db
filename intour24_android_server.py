@@ -305,9 +305,7 @@ def groups(date, sight_id):
     else:
         date_start = date+' 00:00:00'
         date_end = date+' 23:59:59'
-    groups = db2.session.query(Group).filter((Group.tour_date > date_start) & (Group.tour_date < date_end))
-    groups = groups.outterjoin(ExcursionsSight, ExcursionsSight.sight_id = sight_id)
-    groups = groups
+    groups = db2.session.query(Group)..filter((Group.tour_date > date_start) & (Group.tour_date < date_end))
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
