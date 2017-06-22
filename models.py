@@ -1,5 +1,5 @@
 # coding: utf-8
-from sqlalchemy import VARCHAR, ARRAY, Boolean, CheckConstraint, Column, DateTime, Float, ForeignKey, Integer, SmallInteger, String, Text, UniqueConstraint
+from sqlalchemy import ARRAY, Boolean, CheckConstraint, Column, DateTime, Float, ForeignKey, Integer, SmallInteger, String, Text, UniqueConstraint
 from sqlalchemy.schema import FetchedValue
 from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
@@ -176,12 +176,12 @@ class Excursion(db.Model):
     description = db.Column(db.Text)
     capacity = db.Column(db.Integer)
     average_rating = db.Column(db.Float)
-    duration = db.Column(db.Text)
+    duration = db.Column(db.Integer)
     category_id = db.Column(db.ForeignKey('category.id'))
     picking_place_id = db.Column(db.ForeignKey('picking_places.id'))
     operator_id = db.Column(db.ForeignKey('operator.id'))
     link_to_site = db.Column(db.String)
-    images = db.Column(db.ARRAY(VARCHAR()))
+    images = db.Column(db.ARRAY(db.VARCHAR()))
     price_id = db.Column(db.ForeignKey('prices.id'))
 
     category = db.relationship('Category', primaryjoin='Excursion.category_id == Category.id', backref='excursions')

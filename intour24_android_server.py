@@ -80,6 +80,17 @@ def is_valid_phone(phone):
         return 1
 
 
+def date_start_end(date):
+    if date == datetime.datetime.now().strftime("%y-%m-%d"):
+        time = datetime.datetime.now().strftime("%H:%M:%S")
+        date_start = date+' '+time
+        date_end = date+' 23:59:59'
+    else:
+        date_start = date+' 00:00:00'
+        date_end = date+' 23:59:59'
+    return date_start, date_end
+
+
 def category_in_json(category):
     return {'id': category.id,
             'name': category.name,
@@ -102,10 +113,9 @@ def picking_place_in_json(picking_place):
 def excursion_properties_in_json(properties):
     rez = []
     for property in properties:
-        property = property.excursion_property
         rez.append({'id': property.id,
-                                'name': property.name,
-                                'icon': property.icon})
+                    'name': property.name,
+                    'icon': property.icon})
     return rez
 
 
@@ -125,7 +135,29 @@ def excursion_in_json_full(excursion, properties):
             'description': excursion.description,
             'capacity': excursion.capacity,
             'rating': excursion.average_rating,
-            'duration': convert(excursion.duration),
+            'duration': excursion.duration,
+            'category': category_in_json(excursion.category),
+            'pickingPlace': picking_place_in_json(excursion.picking_place),
+            'operator': operator_in_json(excursion.operator),
+            'linkToSite': excursion.link_to_site,
+            'images': excursion.images,
+            'price': price_in_json(excursion.price),
+            'properties': excursion_properties_in_json(properties)}
+
+
+def excursion_in_json_full_with_properties_pars(excursion):
+    id = excursion.id
+    properties = db2.session.query(ExcursionProperty). \
+        outerjoin(ExcursionsExcursionProperty, ExcursionsExcursionProperty.excursion_id == id). \
+        filter(ExcursionProperty.id == ExcursionsExcursionProperty.excursion_property_id). \
+        group_by(ExcursionProperty.id). \
+        all()
+    return {'id': excursion.id,
+            'name': excursion.name,
+            'description': excursion.description,
+            'capacity': excursion.capacity,
+            'rating': excursion.average_rating,
+            'duration': excursion.duration,
             'category': category_in_json(excursion.category),
             'pickingPlace': picking_place_in_json(excursion.picking_place),
             'operator': operator_in_json(excursion.operator),
@@ -181,7 +213,6 @@ def sight_in_json_full(sight, properties):
 def sight_properties_in_json(properties):
     rez = []
     for property in properties:
-        property = property.sight_property
         rez.append({'id': property.id,
                     'name': property.name,
                     'image': property.image})
@@ -197,13 +228,84 @@ def sight_in_json_short(sight):
             'cover': sight.cover}
 
 
+def guide_in_json(guide):
+    if guide is not None:
+        return {'id': guide.id,
+                'firstName': guide.first_name,
+                'email': guide.email,
+                'phone': guide.phone,
+                'lastName': guide.last_name,
+                'rating': guide.average_rating}
+    else:
+        return None
+
+
+def groups_with_excursions_in_json_full(groups):
+    rez = []
+    for group in groups:
+        rez.append({'id': group.id,
+                    'tourDate': str(group.tour_date),
+                    'seatsReserved': group.seats_reserved,
+                    'excursion': excursion_in_json_full_with_properties_pars(group.excursion),
+                    'guide': guide_in_json(group.guide),
+                    'seatsCapacity': group.seats_capacity})
+    return rez
+
+
+def group_with_excursions_in_json_full(group):
+    if group is not None:
+        return {'id': group.id,
+                'tourDate': str(group.tour_date),
+                'seatsReserved': group.seats_reserved,
+                'excursion': excursion_in_json_full_with_properties_pars(group.excursion),
+                'guide': guide_in_json(group.guide),
+                'seatsCapacity': group.seats_capacity}
+
+def group_in_json_short(group):
+    if group is not None:
+        return {'id': group.id,
+                'tour_date': str(group.tour_date)}
+
+
+def bookings_in_json(bookings):
+    rez = []
+    for booking in bookings:
+        payment_id = db2.session.query(Payment.id).filter_by(booking_id=booking.id).first()
+        if payment_id:
+            payment_id = payment_id[0]
+        else:
+            payment_id = None
+        rez.append({'id': booking.id,
+                    'touristId': booking.tourist_id,
+                    'excursion': excursion_in_json_full_with_properties_pars(booking.group.excursion),
+                    'totalPrice': booking.total_price,
+                    'paymentId': payment_id,
+                    'group': group_in_json_short(booking.group),
+                    'isCancelled': booking.is_cancelled,
+                    'created': str(booking.create_datetime)})
+    return rez
+
+def booking_in_json(booking):
+    if booking is not None:
+        return {'id': booking.id,
+                'adults': booking.adults,
+                'children': booking.children,
+                'enfants': booking.enfants,
+                'totalPrice': booking.total_price,
+                'group': group_with_excursions_in_json_full(booking.group)}
+
+
 @app.route('/excursion/<id>')
 def excursion(id):
     id_code = id_checker(id)
     if id_code != -1:
         return send_400_with_error(id_code)
-    excursion = Excursion.query.filter_by(id=id).first()
-    properties = ExcursionsExcursionProperty.query.filter_by(excursion_id=id).all()
+    excursion = db2.session.query(Excursion).filter_by(id=id).first()
+    properties = db2.session.query(ExcursionProperty).\
+        outerjoin(ExcursionsExcursionProperty, ExcursionsExcursionProperty.excursion_id == id).\
+        filter(ExcursionProperty.id == ExcursionsExcursionProperty.excursion_property_id).\
+        group_by(ExcursionProperty.id).\
+        all()
     if excursion is None:
         return send_400_with_error(2)
     json_response = excursion_in_json_full(excursion, properties)
@@ -226,8 +328,12 @@ def sight(id):
     id_code = id_checker(id)
     if id_code != -1:
         return send_400_with_error(id_code)
-    sight = Sight.query.filter_by(id=id).first()
-    properties = SightsSightProperty.query.filter_by(sight_id=id).all()
+    sight = db2.session.query(Sight).filter_by(id=id).first()
+    properties = db2.session.query(SightProperty).\
+        outerjoin(SightsSightProperty, SightsSightProperty.sight_id == id).\
+        filter(SightsSightProperty.sight_property_id == SightProperty.id).\
+        group_by(SightProperty.id).\
+        all()
     if sight is not None:
         json_response = sight_in_json_full(sight, properties)
         json_response = json.dumps(json_response)
@@ -298,15 +404,20 @@ def groups(date, sight_id):
     date_code = check_date_by_format('%Y-%m-%d', date)
     if date_code != -1:
         return send_400_with_error(date_code)
-    if date == datetime.datetime.now().strftime("%y-%m-%d"):
-        time = datetime.datetime.now().strftime("%H:%M:%S")
-        date_start = date+' '+time
-        date_end = date+' 23:59:59'
-    else:
-        date_start = date+' 00:00:00'
-        date_end = date+' 23:59:59'
-    groups = db2.session.query(Group)..filter((Group.tour_date > date_start) & (Group.tour_date < date_end))
-    json_response = json.dumps(json_response)
+    date_start, date_end = date_start_end(date)
+    sight = db2.session.query(Sight).filter_by(id=sight_id).first()
+    excursions = db2.session.query(Excursion).\
+        outerjoin(ExcursionsSight, ExcursionsSight.sight_id == sight.id).\
+        filter(ExcursionsSight.excursion_id == Excursion.id).\
+        group_by(Excursion.id).\
+        all()
+    groups = []
+    for excursion in excursions:
+        groups_data = db2.session.query(Group).filter((excursion.id == Group.id) & (Group.tour_date > date_start) &
+                                                      (Group.tour_date < date_end)).\
+            group_by(Group.id)
+        groups.extend(groups_data)
+    json_response = json.dumps(groups_with_excursions_full(groups))
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
 
@@ -316,88 +427,9 @@ def group(id):
     id_code = id_checker(id)
     if id_code != -1:
         return send_400_with_error(id_code)
-    __parameters_group__ = ['id', 'tourDate', 'seatsReserved', 'guideId', 'seatsCapacity', 'excursion']
-    __parameters_excursion__ = ['id', 'name', 'description', 'capacity', 'rating', 'duration', 'linkToSite',
-                                'images', 'category', 'pickingPlace', 'price', 'properties', 'sight', 'operator']
-    __parameters_category__ = ['id', 'name', 'icon']
-    __parameters_picking_place__ = ['id', 'name', 'geoposition']
-    __parameters_price__ = ['id', 'priceForChildren', 'priceForAdult', 'priceForEnfant']
-    __parameters_properties__ = ['id', 'name', 'image']
-    __parameters_sight__ = ['id', 'name']
-    __parameters_operator__ = ['id', 'name', 'phone', 'address', 'logo', 'accreditation']
-    query = 'SELECT g.id, g.tour_date, g.seats_reserved, g.guide_id, g.seats_capacity, e.id, e.name, e.description, ' \
-            'e.capacity, e.average_rating, e.duration, e.link_to_site, e.images, ' \
-            'c.id, c.name, p.*, pp.*, array_agg(ep.id), array_agg(ep.name), array_agg(ep.icon), s.id, s.name, o.*, c.icon ' \
-            'FROM groups g ' \
-            'LEFT JOIN excursions e ' \
-            'ON g.excursion_id = e.id ' \
-            'LEFT JOIN category c ' \
-            'ON e.category_id = c.id ' \
-            'LEFT JOIN prices p ' \
-            'ON e.price_id = p.id ' \
-            'LEFT JOIN picking_places pp ' \
-            'ON e.picking_place_id = pp.id ' \
-            'LEFT JOIN excursions_excursion_property eep ' \
-            'ON eep.excursion_id = e.id ' \
-            'LEFT JOIN excursion_property ep ' \
-            'ON ep.id = eep.excursion_property_id ' \
-            'LEFT JOIN excursions_sights es ' \
-            'ON es.excursion_id = e.id ' \
-            'LEFT JOIN sights s ' \
-            'ON s.id = es.sight_id ' \
-            'LEFT JOIN operator o ' \
-            'ON o.id = e.operator_id ' \
-            'WHERE g.id = %s ' \
-            'GROUP BY g.id, e.id, c.id, p.id, pp.id, s.id, o.id ' \
-            'ORDER BY g.id;'
-    rows = db.select_custom_query_with_params(query, (id,))
-    if rows:
-        for row in rows:
-            json_category = {__parameters_category__[0]: row[13],
-                             __parameters_category__[1]: row[14],
-                             __parameters_category__[2]: row[34]}
-            json_price = {__parameters_price__[0]: row[15],
-                          __parameters_price__[1]: row[16],
-                          __parameters_price__[2]: row[17],
-                          __parameters_price__[3]: row[18]}
-            json_picking_place = {__parameters_picking_place__[0]: row[19],
-                                  __parameters_picking_place__[1]: row[20],
-                                  __parameters_picking_place__[2]: row[21]}
-            json_properties = []
-            for i in range(len(row[22])):
-                json_properties.append({__parameters_properties__[0]: row[22][i],
-                                        __parameters_properties__[1]: row[23][i],
-                                        __parameters_properties__[2]: row[24][i]})
-            json_sight = {__parameters_sight__[0]: row[25],
-                          __parameters_sight__[1]: row[26]}
-            json_operator = {__parameters_operator__[0]: row[27],
-                             __parameters_operator__[1]: row[28],
-                             __parameters_operator__[2]: row[29],
-                             __parameters_operator__[3]: row[30],
-                             __parameters_operator__[4]: row[31],
-                             __parameters_operator__[5]: row[32]}
-            json_excursion = {__parameters_excursion__[0]: row[5],
-                              __parameters_excursion__[1]: row[6],
-                              __parameters_excursion__[2]: row[7],
-                              __parameters_excursion__[3]: row[8],
-                              __parameters_excursion__[4]: row[9],
-                              __parameters_excursion__[5]: convert(row[10]),
-                              __parameters_excursion__[6]: row[11],
-                              __parameters_excursion__[7]: row[12],
-                              __parameters_excursion__[8]: json_category,
-                              __parameters_excursion__[9]: json_picking_place,
-                              __parameters_excursion__[10]: json_price,
-                              __parameters_excursion__[11]: json_properties,
-                              __parameters_excursion__[12]: json_sight,
-                              __parameters_excursion__[13]: json_operator}
-            json_response = {__parameters_group__[0]: row[0],
-                                  __parameters_group__[1]: str(row[1]),
-                                  __parameters_group__[2]: row[2],
-                                  __parameters_group__[3]: row[3],
-                                  __parameters_group__[4]: row[4],
-                                  __parameters_group__[5]: json_excursion,
-                                  }
-        json_response = json.dumps(json_response)
+    group = db2.session.query(Group).filter_by(id=id).first()
+    if group:
+        json_response = json.dumps(group_with_excursions_full(group))
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response
     else:
@@ -434,29 +466,40 @@ def bookings_add():
     total_price_code = id_checker(total_price)
     if total_price_code != -1:
         return send_400_with_error(total_price_code)
-    query = "SELECT seats_reserved, seats_capacity FROM groups WHERE id=%s"
-    rows = db.select_custom_query_with_params(query, (group_id,))
-    if rows:
-        people_reserved = int(rows[0][0]) + int(children) + int(adults) + int(enfants)
-        people_capacity = int(rows[0][1])
+    group = db2.session.query(Group).filter_by(id=group_id).first()
+    if group is not None:
+        people_reserved = group.seats_reserved + int(children) + int(adults) + int(enfants)
+        people_capacity = group.seats_capacity
         if int(people_reserved) <= int(people_capacity):
-            query = "INSERT INTO bookings(tourist_id, group_id, adults, children, " \
-                    "enfants, total_price, create_datetime, is_cancelled) " \
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, 0) " \
-                    "RETURNING id; "
-            c_id = db.update_insert_custom_query_with_params(query, (tourist_id, group_id, adults, children,
-                                                                     enfants, total_price, create_datetime))
+            booking = Booking()
+            booking.tourist_id = tourist_id
+            booking.group_id = group_id
+            booking.adults = adults
+            booking.children = children
+            booking.enfants = enfants
+            booking.total_price = total_price
+            booking.create_datetime = create_datetime
+            booking.is_cancelled = 0
+            try:
+                db2.session.add(booking)
+                db2.session.commit()
+            except Exception:
+                db2.session.rollback()
+            if booking.tourist_id is None:
+                send_400_with_error(2)
             if people_capacity == people_reserved:
                 json_response = {'status': 'OK',
                                  'full': 1,
-                                 'id': c_id}
+                                 'id': booking.id,
+                                 'created': str(booking.create_datetime)}
                 json_response = json.dumps(json_response)
                 response = Response(json_response, content_type='application/json; charset=utf-8')
                 return response
             else:
                 json_response = {'status': 'OK',
                                 'full': 0,
-                                'id': c_id}
+                                'id': booking.id,
+                                'created': str(booking.create_datetime)}
                 json_response = json.dumps(json_response)
                 response = Response(json_response, content_type='application/json; charset=utf-8')
                 return response
@@ -471,54 +514,9 @@ def bookings(tourist_id):
     tourist_id_code = id_checker(tourist_id)
     if tourist_id_code != -1:
         return send_400_with_error(tourist_id_code)
-    __parameters_booking__ = ['id', 'excursion', 'totalPrice', 'paymentId', 'group', 'isCancelled']
-    __parameters_excursion__ = ['id', 'name', 'pickingPlace', 'duration', 'operator']
-    __parameters_picking_place__ = ['id', 'name']
-    __parameters_group__ = ['id', 'tourDate']
-    __parameters_operator__ = ['id', 'name', 'phone', 'address', 'logo', 'accreditation', 'email']
-    query = "SELECT b.id, b.total_price, p.id, e.id, e.name, e.duration, pp.id, pp.name, g.id, g.tour_date, " \
-            "b.is_cancelled, o.id, o.name, o.phone, o.address, o.logo, o.accreditation, o.email " \
-            "FROM bookings b " \
-            "LEFT JOIN payments p " \
-            "ON b.id = p.booking_id " \
-            "LEFT JOIN groups g " \
-            "ON b.group_id = g.id " \
-            "LEFT JOIN excursions e " \
-            "ON g.excursion_id = e.id " \
-            "LEFT JOIN picking_places pp " \
-            "ON e.picking_place_id = pp.id " \
-            "LEFT JOIN operator o " \
-            "ON o.id = e.operator_id " \
-            "WHERE b.tourist_id = %s " \
-            "GROUP BY b.id, p.id, pp.id, g.id, e.id, o.id " \
-            "ORDER BY b.id "
-    rows = db.select_custom_query_with_params(query, (tourist_id,))
-    if rows:
-        json_response = []
-        for row in rows:
-            json_picking_place = {__parameters_picking_place__[0]: row[6],
-                                  __parameters_picking_place__[1]: row[7]}
-            json_group = {__parameters_group__[0]: row[8],
-                          __parameters_group__[1]: str(row[9])}
-            json_operator = {__parameters_operator__[0]: row[11],
-                             __parameters_operator__[1]: row[12],
-                             __parameters_operator__[2]: row[13],
-                             __parameters_operator__[3]: row[14],
-                             __parameters_operator__[4]: row[15],
-                             __parameters_operator__[5]: row[16],
-                             __parameters_operator__[6]: row[17]}
-            json_excursion = {__parameters_excursion__[0]: row[3],
-                              __parameters_excursion__[1]: row[4],
-                              __parameters_excursion__[2]: json_picking_place,
-                              __parameters_excursion__[3]: convert(row[5]),
-                              __parameters_excursion__[4]: json_operator}
-            json_response.append({__parameters_booking__[0]: row[0],
-                                  __parameters_booking__[1]: json_excursion,
-                                  __parameters_booking__[2]: row[1],
-                                  __parameters_booking__[3]: row[2],
-                                  __parameters_booking__[4]: json_group,
-                                  __parameters_booking__[5]: row[10]})
-        json_response = json.dumps(json_response)
+    bookings = db2.session.query(Booking).filter_by(tourist_id=tourist_id).all()
+    if bookings:
+        json_response = json.dumps(bookings_in_json(bookings))
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response
     else:
@@ -530,61 +528,9 @@ def booking(id):
         id_code = id_checker(id)
         if id_code != -1:
             return send_400_with_error(id_code)
-        __parameters__ = ['id', 'adults', 'children', 'enfants', 'totalPrice', 'group']
-        __parameters_group__ = ['id', 'tourDate', 'excursion']
-        __parameters_excursion__ = ['id', 'name', 'duration', 'operator', 'pickingPlace', 'properties']
-        __parameters_picking_place__ = ['id', 'name', 'geoposition']
-        __parameters_properties__ = ['id', 'name', 'icon']
-        __parameters_operator__ = ['id', 'name', 'logo']
-        query = 'SELECT b.id, b.adults, b.children, b.enfants, b.total_price, g.id, g.tour_date, e.id, e.name, ' \
-                'e.duration, o.id, o.name, o.logo, pp.id, pp.name, pp.geoposition, ' \
-                'array_agg(ep.id), array_agg(ep.name), array_agg(ep.icon) ' \
-                'FROM bookings b ' \
-                'LEFT JOIN groups g ' \
-                'ON g.id = b.group_id ' \
-                'LEFT JOIN excursions e ' \
-                'ON g.excursion_id = e.id ' \
-                'LEFT JOIN operator o ' \
-                'ON e.operator_id = o.id ' \
-                'LEFT JOIN picking_places pp ' \
-                'ON e.picking_place_id = pp.id ' \
-                'LEFT JOIN excursions_excursion_property eep ' \
-                'ON eep.excursion_id = e.id ' \
-                'LEFT JOIN excursion_property ep ' \
-                'ON eep.excursion_property_id = ep.id ' \
-                'WHERE b.id = %s ' \
-                'GROUP BY b.id, g.id, e.id, o.id, pp.id ' \
-                'ORDER BY b.id '
-        rows = db.select_custom_query_with_params(query, (id,))
-        if rows:
-            row = rows[0]
-            json_properties = []
-            for i in range(len(row[16])):
-                json_properties.append({__parameters_properties__[0]: row[16][i],
-                                        __parameters_properties__[1]: row[17][i],
-                                        __parameters_properties__[2]: row[18][i]})
-            json_operator = {__parameters_operator__[0]: row[10],
-                             __parameters_operator__[1]: row[11],
-                             __parameters_operator__[2]: row[12]}
-            json_picking_place = {__parameters_picking_place__[0]: row[13],
-                                  __parameters_picking_place__[1]: row[14],
-                                  __parameters_picking_place__[2]: row[15]}
-            json_excursion = {__parameters_excursion__[0]: row[7],
-                              __parameters_excursion__[1]: row[8],
-                              __parameters_excursion__[2]: convert(row[9]),
-                              __parameters_excursion__[3]: json_operator,
-                              __parameters_excursion__[4]: json_picking_place,
-                              __parameters_excursion__[5]: json_properties}
-            json_group = {__parameters_group__[0]: row[5],
-                          __parameters_group__[1]: str(row[6]),
-                          __parameters_group__[2]: json_excursion}
-            json_response = {__parameters__[0]: row[0],
-                             __parameters__[1]: row[1],
-                             __parameters__[2]: row[2],
-                             __parameters__[3]: row[3],
-                             __parameters__[4]: row[4],
-                             __parameters__[5]: json_group}
-            json_response = json.dumps(json_response)
+        booking = db2.session.query(Booking).filter_by(id=id).first()
+        if booking is not None:
+            json_response = json.dumps(booking_in_json(booking))
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
         else:
@@ -604,19 +550,23 @@ def payments_add():
         return send_400_with_error(payment_time_code)
     if identifier == '' or identifier is None:
         return send_400_with_error(1)
-    query = "SELECT id FROM bookings WHERE id = %s"
-    rows = db.select_custom_query_with_params(query, (booking_id,))
-    if rows:
-        query = "INSERT INTO payments (booking_id, create_datetime, identifier, is_cancelled, is_refund) " \
-                "SELECT %s, %s, %s, 0, 0 " \
-                "WHERE NOT EXISTS (SELECT booking_id FROM payments WHERE booking_id = %s) " \
-                "RETURNING id;"
-        c_id = db.update_insert_custom_query_if_not_exists_with_params(query, (booking_id, payment_time,
-                                                                               identifier, booking_id))
-        if c_id:
+    booking = db2.session.query(Booking).filter_by(id=booking_id).first()
+    if booking is not None and booking.is_cancelled != 1:
+        payment = Payment()
+        payment.booking_id = booking_id
+        payment.create_datetime = payment_time
+        payment.is_cancelled = 0
+        payment.is_refund = 0
+        payment.identifier = identifier
+        try:
+            db2.session.add(payment)
+            db2.session.commit()
+        except Exception:
+            db2.session.rollback()
+        if payment.id is not None:
             json_response = {'status': "OK",
-                             'paymentId': c_id[0],
-                             'createDatetime': payment_time}
+                             'paymentId': payment.id,
+                             'createDatetime': str(payment.create_datetime)}
         else:
             return send_400_with_error(3)
         json_response = json.dumps(json_response)
@@ -631,14 +581,13 @@ def check_phone(phone):
     phone_code = is_valid_phone(phone)
     if phone_code != -1:
         return send_400_with_error(phone_code)
-    query = "SELECT id FROM tourists WHERE phone = %s"
-    rows = db.select_custom_query_with_params(query, (phone,))
-    if rows:
-        code = generate_code()
-        if send_sms(code, phone):
-            json_response = {"status": "OK",
-                             "registered": 1,
-                             "code": code}
+    tourist = db2.session.query(Tourist).filter_by(phone=phone).first()
+    if tourist is not None:
+        # code = generate_code()
+        # if send_sms(code, phone):
+        json_response = {"status": "OK",
+                         "registered": 1}
+                         # "code": code}
     else:
         json_response = {"status": "OK",
                          "registered": 0}
@@ -674,20 +623,21 @@ def registration():
     if phone_code != -1:
         return send_400_with_error(phone_code)
     if name != '' and name is not None:
-        if len(name) > 60:
-            return send_400_with_error(6)
         if phone.isdigit():
-            query = "INSERT INTO tourists (first_name, phone) " \
-                    "SELECT '"+name+"', '"+phone+"' " \
-                    "WHERE NOT EXISTS (SELECT id FROM tourists WHERE phone = '"+phone+"')" \
-                    "RETURNING id;"
-            c_id = db.update_insert_custom_query_if_not_exists(query)
-            if c_id is not None:
-                code = generate_code()
-                send_sms(code, phone)
+            tourist = Tourist()
+            tourist.first_name = name
+            tourist.phone = phone
+            try:
+                db2.session.add(tourist)
+                db2.session.commit()
+            except Exception:
+                db2.session.rollback()
+            if tourist.id is not None:
+                # code = generate_code()
+                # send_sms(code, phone)
                 json_response = {"status": "OK",
-                                 "id": +c_id[0],
-                                 "code": code}
+                                 "id": +tourist.id}
+                                 # "code": code}
             else:
                 json_response = {"status": "ERROR",
                                  "id": 0,
@@ -695,12 +645,6 @@ def registration():
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
-        else:
-            try:
-                if int(phone) < 0:
-                    return send_400_with_error(6)
-            except ValueError:
-                return send_400_with_error(5)
     return send_400_with_error(1)
 
 
@@ -716,12 +660,16 @@ def update_tourist():
     if phone_code != -1:
         return send_400_with_error(phone_code)
     if name == '' or name is None:
-        if len(name) > 60:
-            return send_400_with_error(6)
         return send_400_with_error(1)
-    query = "UPDATE tourists SET first_name = %s, phone = %s WHERE id = %s RETURNING id;"
-    c_id = db.update_insert_custom_query_if_not_exists_with_params(query, (name, phone, c_id))
-    if c_id is not None:
+    tourist = db2.session.query(Tourist).filter_by(id=c_id).first()
+    if tourist.id is not None:
+        tourist.name = name
+        tourist.phone = phone
+        try:
+            db2.session.add(tourist)
+            db2.session.commit()
+        except Exception:
+            db2.session.rollback()
         json_response = {"status": "OK",
                          "id": c_id[0]}
         json_response = json.dumps(json_response)
