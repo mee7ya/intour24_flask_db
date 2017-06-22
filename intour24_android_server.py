@@ -663,10 +663,9 @@ def update_tourist():
         return send_400_with_error(1)
     tourist = db2.session.query(Tourist).filter_by(id=c_id).first()
     if tourist.id is not None:
-        tourist.name = name
+        tourist.first_name = name
         tourist.phone = phone
         try:
-            db2.session.add(tourist)
             db2.session.commit()
         except Exception:
             db2.session.rollback()
@@ -689,23 +688,23 @@ def cancel_payment():
     cancelled_datetime_code = check_date_by_format('%Y-%m-%d %H:%M:%S', cancelled_datetime)
     if cancelled_datetime_code != -1:
         return send_400_with_error(cancelled_datetime_code)
-    query = "SELECT id FROM payments WHERE booking_id = %s AND is_cancelled = 1"
-    rows = db.select_custom_query_with_params(query, (booking_id,))
-    if not rows:
-        query = "UPDATE payments SET is_cancelled = 1, cancelled_datetime = %s WHERE booking_id = %s RETURNING id"
-        payment_id = db.update_insert_custom_query_if_not_exists_with_params(query, (cancelled_datetime, booking_id))
-        if payment_id is not None:
-            query = "UPDATE bookings SET is_cancelled = 1, update_datetime = %s WHERE id = %s RETURNING id"
-            booking_id = db.update_insert_custom_query_if_not_exists_with_params(query, (cancelled_datetime, booking_id))
+    payment = db2.session.query(Payment).filter_by(booking_id=booking_id)
+    if payment is not None:
+        if payment.is_cancelled != 1:
+            payment.is_cancelled = 1
+            payment.cancelled_datetime = cancelled_datetime
+            payment.booking.is_cancelled = 1
+            payment.booking.update_datetime = cancelled_datetime
             json_response = {"status": "OK",
-                             "paymentId": payment_id[0],
-                             "bookingId": booking_id[0]}
+                             "paymentId": payment.id,
+                             "bookingId": booking.id}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
-        send_400_with_error(2)
+        else:
+            send_400_with_error(2)
     else:
-        send_400_with_error(3)
+        send_400_with_error(2)
 
 
 @app.route('/paymentByBookingId/<id>')
