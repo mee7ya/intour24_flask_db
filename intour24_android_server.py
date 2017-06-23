@@ -92,22 +92,31 @@ def date_start_end(date):
 
 
 def category_in_json(category):
-    return {'id': category.id,
-            'name': category.name,
-            'icon': category.icon}
+    if category is not None:
+        return {'id': category.id,
+                'name': category.name,
+                'icon': category.icon}
+    else:
+        return None
 
 
 def price_in_json(price):
-    return {'id': price.id,
-            'priceForChildren': price.price_for_children,
-            'priceForAdult': price.price_for_adult,
-            'priceForEnfant': price.price_for_enfant}
+    if price is not None:
+        return {'id': price.id,
+                'priceForChildren': price.price_for_children,
+                'priceForAdult': price.price_for_adult,
+                'priceForEnfant': price.price_for_enfant}
+    else:
+        return None
 
 
 def picking_place_in_json(picking_place):
-    return {'id': picking_place.id,
-            'name': picking_place.name,
-            'geoposition': picking_place.geoposition}
+    if picking_place is not None:
+        return {'id': picking_place.id,
+                'name': picking_place.name,
+                'geoposition': picking_place.geoposition}
+    else:
+        return None
 
 
 def excursion_properties_in_json(properties):
@@ -120,30 +129,35 @@ def excursion_properties_in_json(properties):
 
 
 def operator_in_json(operator):
-    return {'id': operator.id,
-            'name': operator.name,
-            'phone': operator.phone,
-            'address': operator.address,
-            'logo': operator.logo,
-            'accreditation': operator.accreditation,
-            'email': operator.email}
+    if operator is not None:
+        return {'id': operator.id,
+                'name': operator.name,
+                'phone': operator.phone,
+                'address': operator.address,
+                'logo': operator.logo,
+                'accreditation': operator.accreditation,
+                'email': operator.email}
+    else:
+        return None
 
 
 def excursion_in_json_full(excursion, properties):
-    return {'id': excursion.id,
-            'name': excursion.name,
-            'description': excursion.description,
-            'capacity': excursion.capacity,
-            'rating': excursion.average_rating,
-            'duration': excursion.duration,
-            'category': category_in_json(excursion.category),
-            'pickingPlace': picking_place_in_json(excursion.picking_place),
-            'operator': operator_in_json(excursion.operator),
-            'linkToSite': excursion.link_to_site,
-            'images': excursion.images,
-            'price': price_in_json(excursion.price),
-            'properties': excursion_properties_in_json(properties)}
-
+    if excursion is not None:
+        return {'id': excursion.id,
+                'name': excursion.name,
+                'description': excursion.description,
+                'capacity': excursion.capacity,
+                'rating': excursion.average_rating,
+                'duration': excursion.duration,
+                'category': category_in_json(excursion.category),
+                'pickingPlace': picking_place_in_json(excursion.picking_place),
+                'operator': operator_in_json(excursion.operator),
+                'linkToSite': excursion.link_to_site,
+                'images': excursion.images,
+                'price': price_in_json(excursion.price),
+                'properties': excursion_properties_in_json(properties)}
+    else:
+        return None
 
 def excursion_in_json_full_with_properties_pars(excursion):
     id = excursion.id
@@ -430,7 +444,7 @@ def groups(date, sight_id):
                                                       (Group.tour_date < date_end)).\
             group_by(Group.id)
         groups.extend(groups_data)
-    json_response = json.dumps(groups_with_excursions_full(groups))
+    json_response = json.dumps(group_with_excursions_in_json_full(groups))
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
 
@@ -442,7 +456,7 @@ def group(id):
         return send_400_with_error(id_code)
     group = db2.session.query(Group).filter_by(id=id).first()
     if group:
-        json_response = json.dumps(group_with_excursions_full(group))
+        json_response = json.dumps(group_with_excursions_in_json_full(group))
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response
     else:
