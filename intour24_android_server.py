@@ -261,6 +261,7 @@ def group_with_excursions_in_json_full(group):
                 'guide': guide_in_json(group.guide),
                 'seatsCapacity': group.seats_capacity}
 
+
 def group_in_json_short(group):
     if group is not None:
         return {'id': group.id,
@@ -293,6 +294,18 @@ def booking_in_json(booking):
                 'enfants': booking.enfants,
                 'totalPrice': booking.total_price,
                 'group': group_with_excursions_in_json_full(booking.group)}
+
+
+def payment_in_json_short(payment):
+    if payment is not None:
+        return {'id': payment.id,
+                'bookingId': payment.booking_id,
+                'createDatetime': payment.create_datetime,
+                'cancelledDatetime': payment.cancelled_datetime,
+                'refundDatetime': payment.refund_datetime,
+                'isCancelled': payment.is_cancelled,
+                'isRefund': payment.is_refund,
+                'idenitfier': payment.identifier}
 
 
 @app.route('/excursion/<id>')
@@ -712,29 +725,15 @@ def payment_by_booking_id(id):
     id_code = id_checker(id)
     if id_code != -1:
         return send_400_with_error(id_code)
-    __parameters_payment__ = ['id', 'bookingId', 'createDatetime', 'cancelledDatetime',
-                              'refundDatetime', 'isCancelled', 'isRefund', 'identifier']
-    query = "SELECT * FROM payments WHERE booking_id= %s"
-    rows = db.select_custom_query_with_params(query, (id,))
-    if rows:
-        row = rows[0]
-        formatted_create_datetime = None
-        formatted_cancel_datetime = None
-        formatted_refund_datetime = None
-        if row[2] is not None:
-            formatted_create_datetime = str(row[2])
-        if row[3] is not None:
-            formatted_cancel_datetime = str(row[3])
-        if row[4] is not None:
-            formatted_refund_datetime = str(row[4])
-        json_response = {__parameters_payment__[0]: row[0],
-                         __parameters_payment__[1]: row[1],
-                         __parameters_payment__[2]: formatted_create_datetime,
-                         __parameters_payment__[3]: formatted_cancel_datetime,
-                         __parameters_payment__[4]: formatted_refund_datetime,
-                         __parameters_payment__[5]: row[5],
-                         __parameters_payment__[6]: row[6],
-                         __parameters_payment__[7]: row[7]}
+    payment = db2.session.query(Payment).filter_by(booking_id=id).first()
+    if payment:
+        if payment.create_datetime is not None:
+            payment.create_datetime = str(payment.create_datetime)
+        if payment.cancelled_datetime is not None:
+            payment.cancelled_datetime = str(payment.cancelled_datetime)
+        if payment.refund_datetime is not None:
+            payment.refund_datetime = str(payment.refund_datetime)
+        json_response = payment_in_json_short(payment)
         json_response = json.dumps(json_response)
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response
@@ -748,23 +747,26 @@ def refund_payment():
     id_code = id_checker(id)
     if id_code != -1:
         return send_400_with_error(id_code)
-    query = "SELECT id FROM payments WHERE id = %s AND is_refund = 1"
-    db_response = db.select_custom_query_with_params(query, (id,))
-    if db_response:
+    payment = db2.session.query(Payment).filter_by(id=id).first()
+    if payment is not None:
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        query = "UPDATE payments SET is_refund = 1, refund_datetime = %s WHERE id = %s RETURNING id, refund_datetime;"
-        db_response = db.update_insert_custom_query_if_not_exists_with_params(query, (date_time, id))
-        if db_response:
-            json_response = {"status": "OK",
-                             "id": db_response[0],
-                             "refundDatetime": str(db_response[1])}
-            json_response = json.dumps(json_response)
-            response = Response(json_response, content_type='application/json; charset=utf-8')
-            return response
+        if payment.is_refund == 0:
+                payment.is_refund = 1
+                payment.refund_datetime = date_time
+                try:
+                    db2.session.commit()
+                except ValueError:
+                    db2.session.rollback()
+                json_response = {"status": "OK",
+                                 "id": payment.id,
+                                 "refundDatetime": str(payment.refund_datetime)}
+                json_response = json.dumps(json_response)
+                response = Response(json_response, content_type='application/json; charset=utf-8')
+                return response
         else:
-            return send_400_with_error(2)
+            return send_400_with_error(3)
     else:
-        return send_400_with_error(3)
+        return send_400_with_error(2)
 
 
 @app.route('/cancelBooking', methods=['PUT'])
@@ -777,14 +779,22 @@ def cancel_booking():
     cancelled_datetime_code = check_date_by_format('%Y-%m-%d %H:%M:%S', cancelled_datetime)
     if cancelled_datetime_code != -1:
         return send_400_with_error(cancelled_datetime_code)
-    query = "UPDATE bookings SET is_cancelled = 1, update_datetime = %s WHERE id = %s RETURNING id"
-    c_id = db.update_insert_custom_query_if_not_exists_with_params(query, (cancelled_datetime, id))
-    if c_id:
-        json_response = {'status': 'OK',
-                         'id': c_id[0]}
-        json_response = json.dumps(json_response)
-        response = Response(json_response, content_type='application/json; charset=utf-8')
-        return response
+    booking = db2.session.query(Booking).filter_by(id=id).first()
+    if booking is not None:
+        if booking.is_cancelled == 0:
+            booking.is_cancelled = 1
+            booking.update_datetime = cancelled_datetime
+            try:
+                db2.session.commit()
+            except Exception:
+                db2.session.rollback()
+            json_response = {'status': 'OK',
+                             'id': booking.id}
+            json_response = json.dumps(json_response)
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        else:
+            return send_400_with_error(3)
     else:
         return send_400_with_error(2)
 
