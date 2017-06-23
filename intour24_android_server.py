@@ -29,7 +29,7 @@ def send_400_with_error(error):
 def id_checker(id):
     if id != '' and id is not None:
         if id.isdigit():
-            if int(id) == 0:
+            if int(id) == 0 or int(id) >= 2147483647:
                 return 6
             return -1
         else:
@@ -45,6 +45,8 @@ def id_checker(id):
 def id_checker_accept_zero(id):
     if id != '' and id is not None:
         if id.isdigit():
+            if int(id) >= 2147483647:
+                return 6
             return -1
         else:
             try:
@@ -157,6 +159,7 @@ def excursion_in_json_full(excursion, properties):
                 'properties': excursion_properties_in_json(properties)}
     else:
         return None
+
 
 def excursion_in_json_full_with_properties_pars(excursion):
     id = excursion.id
@@ -273,6 +276,8 @@ def group_with_excursions_in_json_full(group):
                 'excursion': excursion_in_json_full_with_properties_pars(group.excursion),
                 'guide': guide_in_json(group.guide),
                 'seatsCapacity': group.seats_capacity}
+    else:
+        return None
 
 
 def group_in_json_short(group):
@@ -307,7 +312,9 @@ def booking_in_json(booking):
                 'children': booking.children,
                 'enfants': booking.enfants,
                 'totalPrice': booking.total_price,
-                'group': group_with_excursions_in_json_full(booking.group)}
+                'group': group_with_excursions_in_json_full(booking.group),
+                'isCancelled': booking.is_cancelled,
+                'created': str(booking.create_datetime)}
 
 
 def payment_in_json_short(payment):
@@ -392,18 +399,20 @@ def groups_upd():
     group_id_code = id_checker(group_id)
     if group_id_code != -1:
         return send_400_with_error(group_id_code)
-    if seats_reserved == '' or seats_reserved is None:
-        return send_400_with_error(1)
-    if int(seats_reserved) == 0:
-        return send_400_with_error(6)
+    seats_reserved_code = id_checker_accept_zero(seats_reserved)
+    if seats_reserved_code != -1:
+        send_400_with_error(seats_reserved_code)
     group = db2.session.query(Group).filter_by(id=group_id).first()
-    if group:
+    if group is not None:
         more_seats_reserved = int(group.seats_reserved)+int(seats_reserved)
         if more_seats_reserved < 0:
             return send_400_with_error(6)
         if more_seats_reserved <= group.seats_capacity:
             group.seats_reserved = more_seats_reserved
-            db2.session.commit()
+            try:
+                db2.session.commit()
+            except Exception:
+                db2.session.rollback()
             if more_seats_reserved == group.seats_capacity:
                 json_response = {'status': "OK",
                                  'full': 1,
@@ -444,7 +453,7 @@ def groups(date, sight_id):
                                                       (Group.tour_date < date_end)).\
             group_by(Group.id)
         groups.extend(groups_data)
-    json_response = json.dumps(group_with_excursions_in_json_full(groups))
+    json_response = json.dumps(groups_with_excursions_in_json_full(groups))
     response = Response(json_response, content_type='application/json; charset=utf-8')
     return response
 
@@ -667,8 +676,7 @@ def registration():
                                  # "code": code}
             else:
                 json_response = {"status": "ERROR",
-                                 "id": 0,
-                                 "code": 0}
+                                 "error": "2"}
             json_response = json.dumps(json_response)
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
