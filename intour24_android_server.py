@@ -1,6 +1,5 @@
 import requests
 from flask import Flask, url_for, request, json, Response
-from nikita_first_python_program import convert
 import datetime
 import intour24_database
 import random
@@ -189,7 +188,7 @@ def excursions_in_json(excursions):
                     'description': excursion.description,
                     'capacity': excursion.capacity,
                     'rating': excursion.average_rating,
-                    'duration': convert(excursion.duration),
+                    'duration': excursion.duration,
                     'categotyId': excursion.category_id,
                     'startPlaceId': excursion.picking_place_id,
                     'operatorId': excursion.operator_id,
@@ -299,6 +298,7 @@ def bookings_in_json(bookings):
                     'isCancelled': booking.is_cancelled,
                     'created': str(booking.create_datetime)})
     return rez
+
 
 def booking_in_json(booking):
     if booking is not None:
