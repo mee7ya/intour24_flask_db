@@ -701,6 +701,7 @@ def check_phone(phone):
         if send_sms(code, phone):
             json_response = {"status": "OK",
                              "registered": 1,
+                             "id": rows[0][0],
                              "code": code}
     else:
         json_response = {"status": "OK",
