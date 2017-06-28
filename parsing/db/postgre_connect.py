@@ -6,7 +6,6 @@ class Dates:
         self.start_date = None
         self.repeat_interval = None
         self.excursion_id = None
-        self.db = DBConnect()
 
     def get_dates_id(self, start_date, repeat_interval):
         dates = Dates()
@@ -16,10 +15,12 @@ class Dates:
         return dates.id
 
     def save(self):
-        self.db.cur.execute("INSERT INTO schedule (start_date, repeat_interval, excursion_id) "
+        db = DBConnect()
+        db.cur.execute("INSERT INTO schedule (start_date, repeat_interval, excursion_id) "
                             "VALUES ('{}', '{}', '{}');".format(self.start_date, self.repeat_interval,
                                                                 self.excursion_id))
-        self.db.conn.commit()
+        db.conn.commit()
+        db.close()
 
 
 class PickingPlace:
@@ -27,7 +28,6 @@ class PickingPlace:
         self.name = None
         self.geoposition = None
         self.id = None
-        self.db = DBConnect()
 
     def get_place_id(start_point):
         picking_place = PickingPlace()
@@ -37,10 +37,12 @@ class PickingPlace:
         return picking_place.id
 
     def save(self):
-        self.db.cur.execute("INSERT INTO picking_places (name, geoposition)"
+        db = DBConnect()
+        db.cur.execute("INSERT INTO picking_places (name, geoposition)"
                             "VALUES ('{}', '{}') RETURNING id;".format(self.name, self.geoposition))
         self.id = self.db.cur.fetchone()[0]
-        self.db.conn.commit()
+        db.conn.commit()
+        db.close()
 
 
 class Price:
@@ -49,7 +51,6 @@ class Price:
         self.price_for_children = None
         self.price_for_enfant = None
         self.id = None
-        self.db = DBConnect()
 
     def get_price_id(prices):
         price = Price()
@@ -60,12 +61,15 @@ class Price:
         return price.id
 
     def save(self):
-        self.db.cur.execute("INSERT INTO prices (price_for_children, price_for_adult, price_for_enfant) "
+        db = DBConnect()
+        db.cur.execute("INSERT INTO prices (price_for_children, price_for_adult, price_for_enfant) "
                             "VALUES ('{}', '{}', '{}') RETURNING id;".format(self.price_for_children,
                                                                              self.price_for_adult,
                                                                              self.price_for_enfant))
         self.id = self.db.cur.fetchone()[0]
-        self.db.conn.commit()
+        db.conn.commit()
+        db.close()
+
 
 
 class Tour:
@@ -76,21 +80,22 @@ class Tour:
         self.description = None
         self.start_point = None
         self.id = None
-        self.db = DBConnect()
 
     def save(self):
-        self.db.cur.execute("INSERT INTO excursions (name, duration, price_id, description, picking_place_id) "
+        db = DBConnect()
+        db.cur.execute("INSERT INTO excursions (name, duration, price_id, description, picking_place_id) "
                             "VALUES ('{}', '{}', '{}', '{}', '{}') RETURNING id;".format(self.title, self.duration,
                                                                                          self.price_id,
                                                                                          self.description,
                                                                                          self.start_point))
         self.id = self.db.cur.fetchone()[0]
-        self.db.conn.commit()
+        db.conn.commit()
+        db.close()
 
 
 class DBConnect:
-    def __init__(self, db_name='intour24', user_name='intour24_admin', password='R9i477o#W7cv', connect=True,
-                 host='188.130.155.89'):
+    def __init__(self, db_name='intour24_test', user_name='intour24_admin', password='R9i477o#W7cv', connect=True,
+                 host='localhost'):
         self.PARAMS = "dbname='{}' user='{}' password='{}' host={}".format(db_name, user_name, password, host)
         self.conn = None
         self.cur = None

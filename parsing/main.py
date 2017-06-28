@@ -7,4 +7,5 @@ if __name__ == '__main__':
     tours.extend(kazantravel.parse())
     print(len(tours))
     for tour in tours:
-        print(tour)
+        attrs = vars(tour)
+        print(', '.join("%s: %s" % item for item in attrs.items()))
