@@ -619,11 +619,12 @@ def check_phone(phone):
         return send_400_with_error(phone_code)
     tourist = db2.session.query(Tourist).filter_by(phone=phone).first()
     if tourist is not None:
-        # code = generate_code()
-        # if send_sms(code, phone):
+        code = generate_code()
+        if send_sms(code, phone):
         json_response = {"status": "OK",
-                         "registered": 1}
-                         # "code": code}
+                         "registered": 1,
+                         "id": tourist.id,
+                         "code": code}
     else:
         json_response = {"status": "OK",
                          "registered": 0}
@@ -669,11 +670,11 @@ def registration():
             except Exception:
                 db2.session.rollback()
             if tourist.id is not None:
-                # code = generate_code()
-                # send_sms(code, phone)
+                code = generate_code()
+                send_sms(code, phone)
                 json_response = {"status": "OK",
-                                 "id": +tourist.id}
-                                 # "code": code}
+                                 "id": +tourist.id,
+                                 "code": code}
             else:
                 json_response = {"status": "ERROR",
                                  "error": "2"}
