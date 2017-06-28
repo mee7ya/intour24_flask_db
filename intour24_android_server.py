@@ -621,7 +621,7 @@ def check_phone(phone):
     if tourist is not None:
         code = generate_code()
         if send_sms(code, phone):
-        json_response = {"status": "OK",
+            json_response = {"status": "OK",
                          "registered": 1,
                          "id": tourist.id,
                          "code": code}
