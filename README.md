@@ -3,3 +3,4 @@ Developers' repository
 
 Dependencies:
     * BeautifulSoup
+    * peewee

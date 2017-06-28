@@ -89,8 +89,8 @@ def weekday_num(day):
 
 def day_in_period(day, str_period):
     _, str_start_date, str_end_date, _ = split(r'[(]|[)]|[-]', str_period)
-    start_date = datetime.strptime(str_start_date, '%d.%m.%Y')
-    end_date = datetime.strptime(str_end_date, '%d.%m.%Y')
+    start_date = datetime.strptime(str_start_date.split()[0], '%d.%m.%Y')
+    end_date = datetime.strptime(str_end_date.split()[0], '%d.%m.%Y')
     if start_date <= day <= end_date:
         return True
     return False
