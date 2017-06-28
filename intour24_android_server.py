@@ -231,7 +231,7 @@ def sight_properties_in_json(properties):
     for property in properties:
         rez.append({'id': property.id,
                     'name': property.name,
-                    'image': property.image})
+                    'icon': property.image})
     return rez
 
 
