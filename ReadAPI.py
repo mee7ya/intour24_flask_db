@@ -17,7 +17,7 @@ pp = pprint.PrettyPrinter()
 def parse_excursion(_sheet):
     excursion_sheet = _sheet.get_all_values()
     excursion = Models.Excursion()
-    excursion.price_id = Models.Price.get_price_id(*parse_price(excursion_sheet))
+    excursion.price_id = Models.Price.get_price_id(parse_price(excursion_sheet))
     excursion.name = parse_title(excursion_sheet)
     excursion.description = parse_description(excursion_sheet)
     excursion.duration = parse_duration(excursion_sheet)
@@ -51,11 +51,11 @@ def parse_price(excursion_sheet):
     price = []
     for item in excursion_sheet:
         if item[0] == "Взрослый":
-            price.append(item[1])
-        if item[0] == 'Студенческий':
-            price.append(item[1])
-        if item[0] == "Школьный":
-            price.append(item[1])
+            adult = round(float(item[1].replace(",", ".")))
+            price.append(adult)
+        if item[0] == 'Школьный':
+            children = round(float(item[1].replace(",", ".")))
+            price.append(children)
     return price
 
 
@@ -117,14 +117,11 @@ def parse_excursion_property(excursion_sheet):
             excursionpr.save()
 
 
-# def parse_duration(excursion_sheet):
-#     tdelta = "Put a duration"
-#     FMT = '%H:%M'
-#     for item in excursion_sheet:
-#         if item[0][:7] == 'Вариант':
-#             tdelta = datetime.strptime(item[6], FMT) - datetime.strptime(item[5], FMT)
-#     print(tdelta)
-#     return tdelta
+def parse_duration(excursion_sheet):
+    for item in excursion_sheet:
+        if item[0][:7] == 'Вариант' and item[7] != '':
+            dur = [int(x) for x in item[7].split(':')]
+            return 60 * dur[0] + dur[1]
 
 
 def parse():

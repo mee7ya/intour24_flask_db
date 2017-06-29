@@ -5,15 +5,17 @@ class Sight:
     def __init__(self):
         self.id = None
         self.name = None
-        self.image = None
+        self.images = None
         self.db = DBConnect()
 
     def save(self):
         self.db.cur.execute(
-            "INSERT INTO excursion_property (name, image) WHERE NOT EXISTS "
-            "(SELECT id FROM excursion_property WHERE id = self.id)"
-            "VALUES ('{}', '{}') RETURNING id;".format(self.name, self.image
-                                                       )
+            """
+            INSERT INTO sights (name, images)
+            SELECT '{}', {}
+            WHERE NOT EXISTS (SELECT name FROM sights WHERE name = '{}')
+            RETURNING id;
+            """.format(self.name, 'NULL' if not self.images else self.images, self.name)
         )
         self.db.conn.commit()
         self.id = self.db.cur.fetchone()[0]
@@ -29,7 +31,7 @@ class ExcursionProperty:
 
     def save(self):
         self.db.cur.execute(
-            "INSERT INTO excursion_sights (name, icon) "
+            "INSERT INTO excursion_property (name, icon) "
             "VALUES ('{}', '{}') RETURNING id;".format(self.name, self.icon
                                                        )
         )
@@ -92,7 +94,6 @@ class Price:
         self.id = None
         self.price_for_adult = None
         self.price_for_children = None
-        self.price_for_enfant = None
         self.db = DBConnect()
 
     @staticmethod
@@ -100,15 +101,13 @@ class Price:
         price = Price()
         price.price_for_adult = prices[0]
         price.price_for_children = prices[1]
-        price.price_for_enfant = prices[2]
         price.save()
         return price.id
 
     def save(self):
-        self.db.cur.execute("INSERT INTO prices (price_for_children, price_for_adult, price_for_enfant) "
-                            "VALUES ('{}', '{}', '{}') RETURNING id;".format(self.price_for_children,
-                                                                             self.price_for_adult,
-                                                                             self.price_for_enfant))
+        self.db.cur.execute("INSERT INTO prices (price_for_children, price_for_adult) "
+                            "VALUES ('{}', '{}') RETURNING id;".format(self.price_for_children,
+                                                                       self.price_for_adult))
         self.id = self.db.cur.fetchone()[0]
         self.db.conn.commit()
 
@@ -118,7 +117,6 @@ class Excursion:
         self.id = None
         self.name = None
         self.description = None
-        self.duration = None
         self.duration = None
         self.picking_place = None
         self.price = None
