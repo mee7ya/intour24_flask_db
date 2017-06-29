@@ -557,9 +557,6 @@ def bookings_add():
 
 @app.route('/bookingsByTouristId/<tourist_id>')
 def bookings(tourist_id):
-    tourist_id_code = id_checker_accept_zero(tourist_id)
-    if tourist_id_code != -1:
-        return send_400_with_error(tourist_id_code)
     if tourist_id != '0':
         bookings = db2.session.query(Booking).filter_by(tourist_id=tourist_id).all()
         if bookings:
@@ -567,7 +564,9 @@ def bookings(tourist_id):
             response = Response(json_response, content_type='application/json; charset=utf-8')
             return response
         else:
-            return send_400_with_error(2)
+            json_response = json.dumps([])
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
     else:
         json_response = json.dumps([])
         response = Response(json_response, content_type='application/json; charset=utf-8')
