@@ -26,7 +26,7 @@ def _parse(url):
     tours = []
     for item in tours_block.find_all('div', class_='tour-header'):
         link_tour = SITE_URL + item.a['href']
-        tours.extend(parse_tour(get_html(link_tour)))
+        tours.append(parse_tour(get_html(link_tour)))
     return tours
 
 
@@ -45,27 +45,50 @@ def parse_price(tour_soup):
 
 def parse_dates(tour_soup, title, price, description):
     schedule_soup = tour_soup.find('dl', class_='dl dl-horizontal booking-tour-days')
-    weekday_names = [weekday_num(day) for day in schedule_soup.find_all('dt')]
+    weekday_names = [day.text for day in schedule_soup.find_all('dt')]
     weekday_params = schedule_soup.find_all('dd')
-    tours = []
-    if not len(weekday_names) == 0:
-        for i in range(len(weekday_names)):
-            times = weekday_params[i].find_all('b')
-            periods = weekday_params[i].find_all('small')
-            for j in range(len(periods)):
-                day = datetime.today()
-                last_day = datetime.today() + timedelta(days=DAY_THRESHOLD + 1)
-                while day < last_day:
-                    if day.weekday() == weekday_names[i] and day_in_period(day, periods[j].text):
-                        tour = Models.Tour()
-                        tour.title = title
-                        tour.price = price
-                        tour.description = description
-                        tour.date = day.strftime('%d.%m')
-                        tour.time = times[2 * j].text + '-' + times[2 * j + 1].text
-                        tours.append(tour)
-                    day += timedelta(days=1)
-    return tours
+    tour = Models.Tour()
+    tour.title = title
+    tour.price = price
+    tour.description = description
+    carousel = tour_soup.find(id="carousel") or None
+    if carousel is not None:
+        tour.images = [SITE_URL+img['src'] for img in carousel.find_all("img")]
+    else:
+        tour.images = ''
+
+    temp = dict()
+    for i in range(len(weekday_names)):
+        time_range = weekday_params[i].findAll('b')
+        period = weekday_params[i].small.text
+        temp[weekday_names[i]] = "{}-{}".format(time_range[0].text, time_range[1].text)
+        # temp[weekday_names[i]] = {
+        #     "time_range": "{}-{}".format(time_range[0].text, time_range[1].text),
+        #     "period": period[1:-1]
+        # }
+    tour.schedule = temp
+    return tour
+
+
+    # tours = []
+    # if not len(weekday_names) == 0:
+    #     for i in range(len(weekday_names)):
+    #         times = weekday_params[i].find_all('b')
+    #         periods = weekday_params[i].find_all('small')
+    #         for j in range(len(periods)):
+    #             day = datetime.today()
+    #             last_day = datetime.today() + timedelta(days=7)
+    #             while day < last_day:
+    #                 if day.weekday() == weekday_names[i] and day_in_period(day, periods[j].text):
+    #                     tour = Models.Tour()
+    #                     tour.title = title
+    #                     tour.price = price
+    #                     tour.description = description
+    #                     tour.date = day.strftime('%d.%m')
+    #                     tour.time = times[2 * j].text + '-' + times[2 * j + 1].text
+    #                     tours.append(tour)
+    #                 day += timedelta(days=1)
+    # return tours
 
 
 def parse_description(tour_soup):
@@ -79,12 +102,12 @@ def parse_description(tour_soup):
         return result
 
 
-def weekday_num(day):
+def weekday_num(day_):
     days = {
         'Понедельник': 0, "Вторник": 1, "Среда": 2, "Четверг": 3, "Пятница": 4, "Суббота": 5, "Воскресенье": 6
     }
     for day in days:
-        return days[day]
+        return days[day_.text]
 
 
 def day_in_period(day, str_period):

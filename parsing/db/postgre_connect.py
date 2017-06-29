@@ -40,7 +40,7 @@ class PickingPlace:
         db = DBConnect()
         db.cur.execute("INSERT INTO picking_places (name, geoposition)"
                             "VALUES ('{}', '{}') RETURNING id;".format(self.name, self.geoposition))
-        self.id = self.db.cur.fetchone()[0]
+        self.id = db.cur.fetchone()[0]
         db.conn.commit()
         db.close()
 
@@ -66,7 +66,7 @@ class Price:
                             "VALUES ('{}', '{}', '{}') RETURNING id;".format(self.price_for_children,
                                                                              self.price_for_adult,
                                                                              self.price_for_enfant))
-        self.id = self.db.cur.fetchone()[0]
+        self.id = db.cur.fetchone()[0]
         db.conn.commit()
         db.close()
 
@@ -88,7 +88,7 @@ class Tour:
                                                                                          self.price_id,
                                                                                          self.description,
                                                                                          self.start_point))
-        self.id = self.db.cur.fetchone()[0]
+        self.id = db.cur.fetchone()[0]
         db.conn.commit()
         db.close()
 
