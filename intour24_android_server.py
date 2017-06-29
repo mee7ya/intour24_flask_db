@@ -293,7 +293,7 @@ def group_with_excursions_in_json_full(group):
 def group_in_json_short(group):
     if group is not None:
         return {'id': group.id,
-                'tour_date': str(group.tour_date)}
+                'tourDate': str(group.tour_date)}
 
 
 def bookings_in_json(bookings):
@@ -557,16 +557,21 @@ def bookings_add():
 
 @app.route('/bookingsByTouristId/<tourist_id>')
 def bookings(tourist_id):
-    tourist_id_code = id_checker(tourist_id)
+    tourist_id_code = id_checker_accept_zero(tourist_id)
     if tourist_id_code != -1:
         return send_400_with_error(tourist_id_code)
-    bookings = db2.session.query(Booking).filter_by(tourist_id=tourist_id).all()
-    if bookings:
-        json_response = json.dumps(bookings_in_json(bookings))
+    if tourist_id != '0':
+        bookings = db2.session.query(Booking).filter_by(tourist_id=tourist_id).all()
+        if bookings:
+            json_response = json.dumps(bookings_in_json(bookings))
+            response = Response(json_response, content_type='application/json; charset=utf-8')
+            return response
+        else:
+            return send_400_with_error(2)
+    else:
+        json_response = json.dumps([])
         response = Response(json_response, content_type='application/json; charset=utf-8')
         return response
-    else:
-        return send_400_with_error(2)
 
 
 @app.route('/booking/<id>')
