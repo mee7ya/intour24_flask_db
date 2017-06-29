@@ -162,25 +162,35 @@ def excursion_in_json_full(excursion, properties):
 
 
 def excursion_in_json_full_with_properties_pars(excursion):
-    id = excursion.id
-    properties = db2.session.query(ExcursionProperty). \
-        outerjoin(ExcursionsExcursionProperty, ExcursionsExcursionProperty.excursion_id == id). \
-        filter(ExcursionProperty.id == ExcursionsExcursionProperty.excursion_property_id). \
-        group_by(ExcursionProperty.id). \
-        all()
-    return {'id': excursion.id,
-            'name': excursion.name,
-            'description': excursion.description,
-            'capacity': excursion.capacity,
-            'rating': excursion.average_rating,
-            'duration': excursion.duration,
-            'category': category_in_json(excursion.category),
-            'pickingPlace': picking_place_in_json(excursion.picking_place),
-            'operator': operator_in_json(excursion.operator),
-            'linkToSite': excursion.link_to_site,
-            'images': excursion.images,
-            'price': price_in_json(excursion.price),
-            'properties': excursion_properties_in_json(properties)}
+    if excursion is not None:
+        id = excursion.id
+        properties = db2.session.query(ExcursionProperty). \
+            outerjoin(ExcursionsExcursionProperty, ExcursionsExcursionProperty.excursion_id == id). \
+            filter(ExcursionProperty.id == ExcursionsExcursionProperty.excursion_property_id). \
+            group_by(ExcursionProperty.id). \
+            all()
+        return {'id': excursion.id,
+                'name': excursion.name,
+                'description': excursion.description,
+                'capacity': excursion.capacity,
+                'rating': excursion.average_rating,
+                'duration': excursion.duration,
+                'category': category_in_json(excursion.category),
+                'pickingPlace': picking_place_in_json(excursion.picking_place),
+                'operator': operator_in_json(excursion.operator),
+                'linkToSite': excursion.link_to_site,
+                'images': excursion.images,
+                'price': price_in_json(excursion.price),
+                'properties': excursion_properties_in_json(properties)}
+    else:
+        return None
+
+
+def excursion_in_json_full_with_properties_pars_through_group(group):
+    if group is not None:
+        return excursion_in_json_full_with_properties_pars(group.excursion)
+    else:
+        return None
 
 
 def excursions_in_json(excursions):
@@ -296,7 +306,7 @@ def bookings_in_json(bookings):
             payment_id = None
         rez.append({'id': booking.id,
                     'touristId': booking.tourist_id,
-                    'excursion': excursion_in_json_full_with_properties_pars(booking.group.excursion),
+                    'excursion': excursion_in_json_full_with_properties_pars_through_group(booking.group),
                     'totalPrice': booking.total_price,
                     'paymentId': payment_id,
                     'group': group_in_json_short(booking.group),
