@@ -12,61 +12,65 @@ class BaseModel(Model):
         database = database
 
 
+class Sight(BaseModel):
+    name = CharField(null=True)
+    image = CharField(null=True)
+
+
+class ExcursionProperty(BaseModel):
+    name = CharField(null=True)
+    image = CharField(null=True)
+
+
 class Price(BaseModel):
     price_for_adult = CharField()
     price_for_children = CharField()
-    price_for_enfant = CharField()
+
+    # price_for_enfant = CharField()
 
     @staticmethod
-    def get_price_id(price_for_adult, price_for_children, price_for_enfant):
+    def get_price_id(price_for_adult, price_for_children):  # price_for_enfant):
         price = Price()
         price.price_for_adult = price_for_adult
         price.price_for_children = price_for_children
-        price.price_for_enfant = price_for_enfant
+        # price.price_for_enfant = price_for_enfant
         price.save()
         return price.id
 
 
 class PickingPlace(BaseModel):
     name = CharField()
-    geoposition = CharField()
 
     @staticmethod
-    def get_place_id(name, geoposition):
+    def get_place_id(name):
         picking_place = PickingPlace()
         picking_place.name = name
-        picking_place.geoposition = geoposition
         picking_place.save()
         return picking_place.id
 
 
-class Tour(BaseModel):
-    title = CharField()
-    price = ForeignKeyField(Price, null=True)
-    duration = CharField(null=True)
+class Excursion(BaseModel):
+    name = CharField(null=True)
     description = CharField(null=True)
-    start_point = ForeignKeyField(PickingPlace, null=True)
-    photo = CharField()
+    duration = CharField(null=True)
+    picking_place = ForeignKeyField(PickingPlace, null=True)
+    price = ForeignKeyField(Price, null=True)
 
     def __repr__(self):
-        return str(self.title) + " " + str(self.price) + " " + str(self.date) \
-               + " " + str(self.duration) + " " + str(self.description) \
-               + " " + str(self.start_point) + " " + str(self.photo)
+        return str(self.name) + " " + str(self.description) + " " + str(self.duration) \
+               + " " + str(self.picking_place) + " " + str(self.price)
 
 
-class Dates(BaseModel):
-    start_date = CharField()
-    repeat_interval = CharField()
-    excursion_id = ForeignKeyField(Tour)
-
-    @staticmethod
-    def get_dates_id(start_date, repeat_interval):
-        dates = Dates()
-        dates.start_date = start_date
-        dates.repeat_interval = repeat_interval
-        dates.save()
-        return dates.id
+class Schedule(BaseModel):
+    start_date = CharField(null=True)
+    excursion = ForeignKeyField(Excursion, null=True)
+    end_date = CharField(null=True)
+    repeat_interval = CharField(null=True)
+    repeat_day = CharField(null=True)
+    repeat_month = CharField(null=True)
+    repeat_week = CharField(null=True)
+    repeat_weekday = CharField(null=True)
 
 
 def migrate():
-    create_model_tables([Dates, PickingPlace, Price, Tour], fail_silently=True)
+    create_model_tables([Schedule, PickingPlace, Price, Excursion, Sight, ExcursionProperty], fail_silently=True)
