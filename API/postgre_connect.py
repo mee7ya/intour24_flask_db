@@ -104,10 +104,10 @@ class Price:
         self.db = DBConnect()
 
     @staticmethod
-    def get_price_id(prices):
+    def get_price_id(price_for_adult, price_for_children):
         price = Price()
-        price.price_for_adult = prices[0]
-        price.price_for_children = prices[1]
+        price.price_for_adult = price_for_adult
+        price.price_for_children = price_for_children
         price.save()
         return price.id
 

@@ -17,7 +17,7 @@ pp = pprint.PrettyPrinter()
 def parse_excursion(_sheet):
     excursion_sheet = _sheet.get_all_values()
     excursion = Models.Excursion()
-    excursion.price_id = Models.Price.get_price_id(parse_price(excursion_sheet))
+    excursion.price_id = Models.Price.get_price_id(*parse_price(excursion_sheet))
     excursion.name = parse_title(excursion_sheet)
     excursion.description = parse_description(excursion_sheet)
     excursion.duration = parse_duration(excursion_sheet)
