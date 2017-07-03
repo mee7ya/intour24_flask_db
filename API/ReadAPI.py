@@ -9,13 +9,12 @@ scope = ['https://spreadsheets.google.com/feeds']
 creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
 client = gspread.authorize(creds)
 
-sheet = client.open('Tour info').worksheet('test')
+sheets = client.open_by_url('https://docs.google.com/spreadsheets/d/1KS0ZMaNtgTeH73mxMd5NXNZYKanOnmij9cNlsPfrlIw').worksheets()
 
 pp = pprint.PrettyPrinter()
 
 
-def parse_excursion(_sheet):
-    excursion_sheet = _sheet.get_all_values()
+def parse_excursion(excursion_sheet):
     excursion = Models.Excursion()
     excursion.price = Models.Price.get_price_id(*parse_price(excursion_sheet))
     excursion.name = parse_title(excursion_sheet)
@@ -148,7 +147,15 @@ def parse_duration(excursion_sheet):
 
 
 def parse():
-    return parse_excursion(sheet)
+    parsed = 0
+    for sheet in sheets:
+        excursion_sheet = sheet.get_all_values()
+        if excursion_sheet[0][0] == "Экскурсия":
+            print("Started parsing %s" % sheet.title)
+            parse_excursion(excursion_sheet)
+            print("End parsing %s" % sheet.title)
+            parsed += 1
+    print("Parsed excursions: %s" % parsed)
 
 
 if __name__ == '__main__':

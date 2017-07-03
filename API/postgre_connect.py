@@ -24,7 +24,7 @@ class Excursion:
         )
         db.conn.commit()
         self.id = db.cur.fetchone()[0]
-        print(self.id)
+        print("Excursion '%s' inserted by id: %s" % (self.name, self.id))
         return self.id
 
 
@@ -70,7 +70,6 @@ class ExcursionExcursionProperty:
         )
         db.conn.commit()
         self.id = db.cur.fetchone()[0]
-        print("Property {}".format(self.id))
         return self.id
 
 
@@ -116,7 +115,6 @@ class ExcursionSight:
         )
         db.conn.commit()
         self.id = db.cur.fetchone()[0]
-        print("Sight {}".format(self.id))
         return self.id
 
 
