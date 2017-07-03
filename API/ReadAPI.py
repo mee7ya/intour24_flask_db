@@ -114,7 +114,7 @@ def parse_repeat_intervals(regularity, day_of_week):
 
 def parse_sight(excursion_sheet, excursion_id):
     for item in excursion_sheet:
-        if item[0][:5] == 'Пункт':
+        if item[0][:5] == 'Пункт' and item[1] != '':
             sight = Models.Sight()
             sight.name = item[1]
             sight.image = ''
@@ -159,11 +159,14 @@ def parse(link=DEFAULT_LINK):
                 excursion_sheet = sheet.get_all_values()
                 if excursion_sheet[0][0] == "Экскурсия":
                     print("На очереди: '%s'" % sheet.title)
-                    ans = input('Парсим (y/n)? ')
+                    ans = input('Парсим (y/n/e)? ')
                     if ans.strip()[0].lower() == "y":
                         parse_excursion(excursion_sheet)
                         print("Закончили парсить '%s'" % sheet.title)
                         parsed += 1
+                    elif ans.strip()[0].lower() == "e":
+                        print("Вы отменили парсинг")
+                        exit()
                     else:
                         print("Пропущена \n")
                         pass
