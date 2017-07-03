@@ -1,31 +1,30 @@
 import psycopg2 as p
 
 
-class Sight:
+class Excursion:
     def __init__(self):
         self.id = None
         self.name = None
-        self.images = None
-        self.db = DBConnect()
+        self.description = None
+        self.duration = None
+        self.picking_place = None
+        self.price = None
 
     def save(self):
-        self.db.cur.execute(
-            """
-            INSERT INTO sights (name, images) 
-            SELECT '{}', {}
-            WHERE NOT EXISTS (SELECT name FROM sights WHERE name = '{}')
-            RETURNING id;
-            """.format(self.name, 'NULL' if not self.images else self.images, self.name)
+        db = DBConnect()
+        db.cur.execute(
+            """INSERT INTO excursions (name, description, duration, picking_place_id, price_id)
+            VALUES (%s, %s, %s, %s, %s) RETURNING id;""", (
+                self.name,
+                self.description,
+                self.duration,
+                self.picking_place,
+                self.price
+            )
         )
-        self.db.conn.commit()
-        self.db.cur.execute(
-            """
-            SELECT id FROM sights
-            WHERE name = '{}';
-            """.format(self.name)
-        )
-        self.db.conn.commit()
-        self.id = self.db.cur.fetchone()[0]
+        db.conn.commit()
+        self.id = db.cur.fetchone()[0]
+        print(self.id)
         return self.id
 
 
@@ -34,43 +33,118 @@ class ExcursionProperty:
         self.id = None
         self.name = None
         self.icon = None
-        self.db = DBConnect()
 
     def save(self):
-        self.db.cur.execute(
-            "INSERT INTO excursion_property (name, icon) "
-            "VALUES ('{}', '{}') RETURNING id;".format(self.name, self.icon
-                                                       )
+        db = DBConnect()
+        db.cur.execute(
+            """INSERT INTO excursion_property (name, icon) 
+            SELECT '{}', {}
+            WHERE NOT EXISTS (SELECT name FROM excursion_property WHERE name = '{}')
+            RETURNING id;
+            """.format(self.name, 'NULL' if not self.icon else self.icon, self.name)
         )
-        self.db.conn.commit()
-        self.id = self.db.cur.fetchone()[0]
+        db.conn.commit()
+        db.cur.execute(
+            """SELECT id FROM excursion_property
+            WHERE name = '{}';""".format(self.name)
+        )
+        db.conn.commit()
+        self.id = db.cur.fetchone()[0]
+        return self.id
+
+
+class ExcursionExcursionProperty:
+    def __init__(self):
+        self.id = None
+        self.excursion = None
+        self.property = None
+
+    def save(self):
+        db = DBConnect()
+        db.cur.execute(
+            """INSERT INTO excursions_excursion_property (excursion_id, excursion_property_id)
+            VALUES (%s, %s) RETURNING id""",
+            (
+                self.excursion, self.property
+            )
+        )
+        db.conn.commit()
+        self.id = db.cur.fetchone()[0]
+        print("Property {}".format(self.id))
+        return self.id
+
+
+class Sight:
+    def __init__(self):
+        self.id = None
+        self.name = None
+        self.images = None
+
+    def save(self):
+        db = DBConnect()
+        db.cur.execute(
+            """INSERT INTO sights (name, images) 
+            SELECT '{}', {}
+            WHERE NOT EXISTS (SELECT name FROM sights WHERE name = '{}')
+            RETURNING id;
+            """.format(self.name, 'NULL' if not self.images else self.images, self.name)
+        )
+        db.conn.commit()
+        db.cur.execute(
+            """SELECT id FROM sights
+            WHERE name = '{}';""".format(self.name)
+        )
+        db.conn.commit()
+        self.id = db.cur.fetchone()[0]
+        return self.id
+
+
+class ExcursionSight:
+    def __init__(self):
+        self.id = None
+        self.excursion = None
+        self.sight = None
+
+    def save(self):
+        db = DBConnect()
+        db.cur.execute(
+            """INSERT INTO excursions_sights (excursion_id, sight_id)
+            VALUES (%s, %s) RETURNING id""",
+            (
+                self.excursion, self.sight
+            )
+        )
+        db.conn.commit()
+        self.id = db.cur.fetchone()[0]
+        print("Sight {}".format(self.id))
         return self.id
 
 
 class Schedule:
     def __init__(self):
         self.id = None
-        self.start_date = None
         self.excursion = None
+        self.start_date = None
         self.end_date = None
-        self.repeat_interval = 0
+        self.start_time = None
+        self.everyday = None
+        self.weekday = None
+        self.odd_even_week = None
         self.repeat_day = None
-        self.repeat_month = None
-        self.repeat_week = None
-        self.repeat_weekday = None
-        self.db = DBConnect()
 
     def save(self):
-        self.db.cur.execute(
-            "INSERT INTO schedule (start_date, excursion_id, end_date, repeat_interval, "
-            "repeat_day, repeat_month, repeat_week, repeat_weekday) "
-            "VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}') RETURNING id;".format(
-                self.start_date, self.excursion, self.end_date, self.repeat_interval,
-                self.repeat_day, self.repeat_month, self.repeat_week, self.repeat_weekday
+        db = DBConnect()
+        db.cur.execute(
+            """INSERT INTO schedule (excursion_id, start_date, end_date, start_time, 
+            everyday, weekday, odd_even_week, repeat_day)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+            (
+                self.excursion, self.start_date, self.end_date, self.start_time,
+                self.everyday, self.weekday, self.odd_even_week, self.repeat_day
             )
         )
-        self.db.conn.commit()
-        self.id = self.db.cur.fetchone()[0]
+        db.conn.commit()
+        self.id = db.cur.fetchone()[0]
         return self.id
 
 
@@ -79,7 +153,6 @@ class PickingPlace:
         self.id = None
         self.name = None
         self.geoposition = None
-        self.db = DBConnect()
 
     @staticmethod
     def get_place_id(start_point):
@@ -90,10 +163,22 @@ class PickingPlace:
         return picking_place.id
 
     def save(self):
-        self.db.cur.execute("INSERT INTO picking_places (name, geoposition)"
-                            "VALUES ('{}', '{}') RETURNING id;".format(self.name, self.geoposition))
-        self.id = self.db.cur.fetchone()[0]
-        self.db.conn.commit()
+        db = DBConnect()
+        db.cur.execute(
+            """INSERT INTO picking_places (name, geoposition) 
+            SELECT '{}', {}
+            WHERE NOT EXISTS (SELECT name FROM picking_places WHERE name = '{}')
+            RETURNING id;
+            """.format(self.name, 'NULL' if not self.geoposition else self.geoposition, self.name)
+        )
+        db.conn.commit()
+        db.cur.execute(
+            """SELECT id FROM picking_places
+            WHERE name = '{}';""".format(self.name)
+        )
+        db.conn.commit()
+        self.id = db.cur.fetchone()[0]
+        return self.id
 
 
 class Price:
@@ -101,7 +186,6 @@ class Price:
         self.id = None
         self.price_for_adult = None
         self.price_for_children = None
-        self.db = DBConnect()
 
     @staticmethod
     def get_price_id(price_for_adult, price_for_children):
@@ -112,39 +196,17 @@ class Price:
         return price.id
 
     def save(self):
-        self.db.cur.execute("INSERT INTO prices (price_for_children, price_for_adult) "
+        db = DBConnect()
+        db.cur.execute("INSERT INTO prices (price_for_children, price_for_adult) "
                             "VALUES ('{}', '{}') RETURNING id;".format(self.price_for_children,
                                                                        self.price_for_adult))
-        self.id = self.db.cur.fetchone()[0]
-        self.db.conn.commit()
-
-
-class Excursion:
-    def __init__(self):
-        self.id = None
-        self.name = None
-        self.description = None
-        self.duration = None
-        self.picking_place = None
-        self.price = None
-        self.db = DBConnect()
-
-    def save(self):
-        self.db.cur.execute(
-            "INSERT INTO excursions (name, description, duration) "
-            "VALUES ('{}', '{}', '{}') RETURNING id;".format(
-                self.name,
-                self.description,
-                self.duration
-            )
-        )
-
-        self.db.conn.commit()
-        self.id = self.db.cur.fetchone()[0]
+        self.id = db.cur.fetchone()[0]
+        db.conn.commit()
+        return self.id
 
 
 class DBConnect:
-    def __init__(self, db_name='intour24', user_name='intour24_admin', password='R9i477o#W7cv', connect=True,
+    def __init__(self, db_name='intour24_test', user_name='intour24_admin', password='R9i477o#W7cv', connect=True,
                  host='188.130.155.89'):
         self.PARAMS = "dbname='{}' user='{}' password='{}' host={}".format(db_name, user_name, password, host)
         self.conn = None

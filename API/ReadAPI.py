@@ -3,13 +3,13 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pprint
 import local_db as db
 from datetime import *
-from settings import *
+from API.settings import *
 
 scope = ['https://spreadsheets.google.com/feeds']
 creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
 client = gspread.authorize(creds)
 
-sheet = client.open('Tour info').worksheet('Свияжск и Раифа')
+sheet = client.open('Tour info').worksheet('test')
 
 pp = pprint.PrettyPrinter()
 
@@ -17,20 +17,20 @@ pp = pprint.PrettyPrinter()
 def parse_excursion(_sheet):
     excursion_sheet = _sheet.get_all_values()
     excursion = Models.Excursion()
-    excursion.price_id = Models.Price.get_price_id(*parse_price(excursion_sheet))
+    excursion.price = Models.Price.get_price_id(*parse_price(excursion_sheet))
     excursion.name = parse_title(excursion_sheet)
     excursion.description = parse_description(excursion_sheet)
     excursion.duration = parse_duration(excursion_sheet)
     start_point = parse_start_point(excursion_sheet)
     if start_point is not None:
-        excursion.start_point = Models.PickingPlace.get_place_id(start_point)
+        excursion.picking_place = Models.PickingPlace.get_place_id(start_point)
     else:
-        excursion.start_point = None
+        excursion.picking_place = None
     excursion.save()
 
     parse_schedules(excursion_sheet, excursion.id)
-    parse_sight(excursion_sheet)
-    parse_excursion_property(excursion_sheet)
+    parse_sight(excursion_sheet, excursion.id)
+    parse_excursion_property(excursion_sheet, excursion.id)
     return excursion
 
 
@@ -39,10 +39,17 @@ def parse_schedules(excursion_sheet, excursion_id):
         if item[0][:7] == 'Вариант' and item[3] != '':
             schedule = Models.Schedule()
 
-            schedule.start_date = datetime.strptime(item[1], DATE_FORMAT).strftime(DATE_TZ_FORMAT)
-            schedule.end_date = datetime.strptime(item[2], DATE_FORMAT).strftime(DATE_TZ_FORMAT)
-            schedule.repeat_day, schedule.repeat_week, schedule.repeat_weekday, schedule.repeat_month \
-                = parse_repeat_intervals(item[3], item[4])
+            schedule.start_date = datetime.strptime(item[1], DATE_FORMAT).strftime(DATE_DB_FORMAT)
+            schedule.start_time = datetime.strptime(item[5], TIME_FORMAT).strftime(TIME_DB_FORMAT)
+            if item[3] != 'Единожды' and item[3] != "Ежемесячно":
+                schedule.end_date = datetime.strptime(item[2], DATE_FORMAT).strftime(DATE_DB_FORMAT)
+                schedule.everyday, schedule.weekday, schedule.odd_even_week \
+                    = parse_repeat_intervals(item[3], item[4])
+            elif item[3] == "Ежемесячно":
+                schedule.end_date = datetime.strptime(item[2], DATE_FORMAT).strftime(DATE_DB_FORMAT)
+                schedule.repeat_day = datetime.strptime(item[1], DATE_FORMAT).day
+            elif item[3] == 'Единожды':
+                schedule.end_date = schedule.start_date
             schedule.excursion = excursion_id
             schedule.save()
 
@@ -78,28 +85,34 @@ def parse_start_point(excursion_sheet):
 
 
 def parse_repeat_intervals(regularity, day_of_week):
-    repeat_weekday = '0'
-    repeat_day = '0'
-    repeat_week = '0'
-    repeat_month = '0'
+    everyday = None
+    weekday = None
+    odd_even_week = None
+    days = {
+        'Понедельник': '1',
+        'Вторник': '2',
+        'Среда': '3',
+        'Четверг': '4',
+        'Пятница': '5',
+        'Суббота': '6',
+        'Воскресенье': '7'
+    }
 
     if regularity == 'Ежедневно':
-        repeat_day = '1'
+        everyday = '1'
     elif regularity == 'Еженедельно':
-        days = {'Суббота': '5', 'Понедельник': '0',
-                'Воскресенье': '6', 'Вторник': '1', 'Среда': '2',
-                'Четверг': '3', 'Пятница': '4'}
-        repeat_week = '1'
-        repeat_weekday = days[day_of_week]
-    elif regularity == 'Через неделю':
-        repeat_week = '1'
-    elif regularity == 'Ежемесячно':
-        repeat_month = '1'
+        weekday = days[day_of_week]
+    elif regularity == 'Нечетная неделя':
+        odd_even_week = "1"
+        weekday = days[day_of_week]
+    elif regularity == 'Четная неделя':
+        odd_even_week = "2"
+        weekday = days[day_of_week]
 
-    return repeat_day, repeat_week, repeat_weekday, repeat_month
+    return everyday, weekday, odd_even_week
 
 
-def parse_sight(excursion_sheet):
+def parse_sight(excursion_sheet, excursion_id):
     for item in excursion_sheet:
         if item[0][:5] == 'Пункт':
             sight = Models.Sight()
@@ -107,14 +120,24 @@ def parse_sight(excursion_sheet):
             sight.image = ''
             sight.save()
 
+            excursion_sight = Models.ExcursionSight()
+            excursion_sight.excursion = excursion_id
+            excursion_sight.sight = sight.id
+            excursion_sight.save()
 
-def parse_excursion_property(excursion_sheet):
+
+def parse_excursion_property(excursion_sheet, excursion_id):
     for item in excursion_sheet:
         if item[0][:1] == '№' and item[1] != '':
             excursionpr = Models.ExcursionProperty()
             excursionpr.name = item[1]
             excursionpr.image = ''
             excursionpr.save()
+
+            excursion_excursionpr = Models.ExcursionExcursionProperty()
+            excursion_excursionpr.excursion = excursion_id
+            excursion_excursionpr.property = excursionpr.id
+            excursion_excursionpr.save()
 
 
 def parse_duration(excursion_sheet):
@@ -129,5 +152,5 @@ def parse():
 
 
 if __name__ == '__main__':
-    db.migrate()
+    # db.migrate()
     parse()

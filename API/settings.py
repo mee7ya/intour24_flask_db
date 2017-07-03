@@ -1,5 +1,5 @@
 import local_db as LocalModels
-import postgre_connect as PostgreModels
+import API.postgre_connect as PostgreModels
 import os
 import pytz
 
@@ -14,5 +14,7 @@ MINS_IN_WEEK = 10080  # 60*24*7
 MINS_IN_DAY = 1440  # 60*24
 
 DATE_FORMAT = '%d.%m.%y'
+TIME_FORMAT = '%H:%M'
 
-DATE_TZ_FORMAT = '%Y-%m-%d %H:%M:%S+03'
+DATE_DB_FORMAT = '%Y-%m-%d'
+TIME_DB_FORMAT = '%H:%M:%S+03'
