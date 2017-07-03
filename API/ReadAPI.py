@@ -1,7 +1,9 @@
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
+
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pprint
-import local_db as db
 from datetime import *
 from API.settings import *
 
@@ -9,10 +11,9 @@ scope = ['https://spreadsheets.google.com/feeds']
 creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
 client = gspread.authorize(creds)
 
-sheets = client.open_by_url('https://docs.google.com/spreadsheets/d/1KS0ZMaNtgTeH73mxMd5NXNZYKanOnmij9cNlsPfrlIw').worksheets()
-
 pp = pprint.PrettyPrinter()
 
+DEFAULT_LINK = 'https://docs.google.com/spreadsheets/d/1KS0ZMaNtgTeH73mxMd5NXNZYKanOnmij9cNlsPfrlIw'
 
 def parse_excursion(excursion_sheet):
     excursion = Models.Excursion()
@@ -146,18 +147,37 @@ def parse_duration(excursion_sheet):
             return 60 * dur[0] + dur[1]
 
 
-def parse():
-    parsed = 0
-    for sheet in sheets:
-        excursion_sheet = sheet.get_all_values()
-        if excursion_sheet[0][0] == "Экскурсия":
-            print("Started parsing %s" % sheet.title)
-            parse_excursion(excursion_sheet)
-            print("End parsing %s" % sheet.title)
-            parsed += 1
-    print("Parsed excursions: %s" % parsed)
+def parse(link=DEFAULT_LINK):
+    if DEFAULT_LINK != link:
+        link = link if link else DEFAULT_LINK
+        print("Ссылка: '%s'" % link)
+        ans = input('Начинаем парсить (y/n)? ')
+        if ans.strip()[0].lower() == "y":
+            sheets = client.open_by_url(link).worksheets()
+            parsed = 0
+            for sheet in sheets:
+                excursion_sheet = sheet.get_all_values()
+                if excursion_sheet[0][0] == "Экскурсия":
+                    print("На очереди: '%s'" % sheet.title)
+                    ans = input('Парсим (y/n)? ')
+                    if ans.strip()[0].lower() == "y":
+                        parse_excursion(excursion_sheet)
+                        print("Закончили парсить '%s'" % sheet.title)
+                        parsed += 1
+                    else:
+                        print("Пропущена \n")
+                        pass
+            print("Всего импортировано экскурсий: %s" % parsed)
+            exit()
+        else:
+            print("Вы отменили парсинг")
+            exit()
 
 
 if __name__ == '__main__':
-    # db.migrate()
-    parse()
+    while True:
+        try:
+            input_link = input('Вставь ссылку на таблицу: ')
+            parse(input_link.strip())
+        except KeyboardInterrupt:
+            print("Вы отменили парсинг")
