@@ -9,17 +9,19 @@ class Excursion:
         self.duration = None
         self.picking_place = None
         self.price = None
+        self.capacity = 50
 
     def save(self):
         db = DBConnect()
         db.cur.execute(
-            """INSERT INTO excursions (name, description, duration, picking_place_id, price_id)
-            VALUES (%s, %s, %s, %s, %s) RETURNING id;""", (
+            """INSERT INTO excursions (name, description, duration, picking_place_id, price_id, capacity)
+            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;""", (
                 self.name,
                 self.description,
                 self.duration,
                 self.picking_place,
-                self.price
+                self.price,
+                self.capacity
             )
         )
         db.conn.commit()
