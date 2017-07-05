@@ -7,11 +7,12 @@ import os
 from models import *
 from flask_sqlalchemy import SQLAlchemy
 
+MEDIA_ROOT="https://intour24.ru/media/"
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 app.config['JSON_AS_ASCII'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://intour24_admin:R9i477o#W7cv@188.130.155.89/intour24"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://intour24_admin:R9i477o#W7cv@188.130.155.89/intour24_test"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 SMS_URL = 'https://sms.ru/sms/'
 SMS_API = '1F5F1DF2-3C6B-D268-A754-75F38D147E70'
@@ -232,7 +233,7 @@ def sight_in_json_full(sight, properties):
             'geoposition': sight.geoposition,
             'images': sight.images,
             'description': sight.description,
-            'cover': sight.cover,
+            'cover': MEDIA_ROOT+sight.cover,
             'properties': sight_properties_in_json(properties)}
 
 
@@ -251,7 +252,7 @@ def sight_in_json_short(sight):
             'geoposition': sight.geoposition,
             'images': sight.images,
             'description': sight.description,
-            'cover': sight.cover}
+            'cover': MEDIA_ROOT+sight.cover}
 
 
 def guide_in_json(guide):
