@@ -242,7 +242,7 @@ def sight_properties_in_json(properties):
     for property in properties:
         rez.append({'id': property.id,
                     'name': property.name,
-                    'icon': property.image})
+                    'icon': property.icon})
     return rez
 
 
@@ -845,6 +845,9 @@ db = intour24_database.Database()
 db2 = SQLAlchemy(app)
 #db.connect(db_name="intour24", host="188.130.155.89", login="intour24_admin", password="R9i477o#W7cv")
 
+import logging
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
