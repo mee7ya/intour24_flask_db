@@ -1,6 +1,7 @@
 import requests
 from flask import Flask, url_for, request, json, Response
 import datetime
+from datetime import datetime as dt
 import intour24_database
 import random
 import os
@@ -16,7 +17,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://intour24_admin:R9i477o#W7c
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 SMS_URL = 'https://sms.ru/sms/'
 SMS_API = '1F5F1DF2-3C6B-D268-A754-75F38D147E70'
-__directory__ = os.path.dirname(os.path.realpath(__file__));
+__directory__ = os.path.dirname(os.path.realpath(__file__))
 
 
 def send_400_with_error(error):
@@ -81,16 +82,30 @@ def is_valid_phone(phone):
     else:
         return 1
 
+import pytz
 
+# https://stackoverflow.com/questions/33736182/filter-objects-with-a-datetime-range-0000-to-235999-in-django
 def date_start_end(date):
-    if date == datetime.datetime.now().strftime("%y-%m-%d"):
-        time = datetime.datetime.now().strftime("%H:%M:%S")
-        date_start = date+' '+time
-        date_end = date+' 23:59:59'
+    # convert string to datetime
+    from_date = dt.strptime(date, '%Y-%m-%d').date()
+
+    if from_date == dt.now().date():
+        # combine `from_date` with now
+        from_date = dt.combine(from_date, datetime.datetime.now().time())
     else:
-        date_start = date+' 00:00:00'
-        date_end = date+' 23:59:59'
-    return date_start, date_end
+        # combine `from_date` with min time value (00:00)
+        from_date = dt.combine(from_date, datetime.time.min)
+
+    # combine `from_date` with max time value (23:59:99) to have end date
+    to_date = dt.combine(from_date, datetime.time.max)
+
+    timezoneLocal = pytz.timezone('Europe/Moscow')
+    utc = pytz.utc
+    from_date = utc.localize(from_date).astimezone(timezoneLocal)
+    to_date = utc.localize(to_date).astimezone(timezoneLocal)
+
+    print(from_date, to_date)
+    return from_date, to_date
 
 
 def category_in_json(category):
@@ -460,9 +475,11 @@ def groups(date, sight_id):
         all()
     groups = []
     for excursion in excursions:
-        groups_data = db2.session.query(Group).filter((excursion.id == Group.id) & (Group.tour_date > date_start) &
-                                                      (Group.tour_date < date_end)).\
-            group_by(Group.id)
+        groups_data = db2.session.query(Group).filter(
+            Group.id == excursion.id,
+            Group.tour_date > date_start,
+            Group.tour_date <= date_end
+        ).group_by(Group.id)
         groups.extend(groups_data)
     json_response = json.dumps(groups_with_excursions_in_json_full(groups))
     response = Response(json_response, content_type='application/json; charset=utf-8')
@@ -847,7 +864,11 @@ db2 = SQLAlchemy(app)
 
 import logging
 logging.basicConfig()
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+sqllogger = logging.getLogger('sqlalchemy.engine')
+sqllogger.setLevel(logging.DEBUG)
+fh = logging.FileHandler('sql.log')
+fh.setLevel(logging.DEBUG)
+sqllogger.addHandler(fh)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
