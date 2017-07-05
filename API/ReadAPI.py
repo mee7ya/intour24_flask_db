@@ -1,10 +1,18 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import pprint
+import ssl
+import urllib.request
 from datetime import *
+
+import json
+import gspread
+import re
+import requests
+from oauth2client.service_account import ServiceAccountCredentials
+from bs4 import BeautifulSoup
+
 from API.settings import *
 
 scope = ['https://spreadsheets.google.com/feeds']
@@ -15,23 +23,26 @@ pp = pprint.PrettyPrinter()
 
 DEFAULT_LINK = 'https://docs.google.com/spreadsheets/d/1KS0ZMaNtgTeH73mxMd5NXNZYKanOnmij9cNlsPfrlIw'
 
-def parse_excursion(excursion_sheet):
-    excursion = Models.Excursion()
-    excursion.price = Models.Price.get_price_id(*parse_price(excursion_sheet))
-    excursion.name = parse_title(excursion_sheet)
-    excursion.description = parse_description(excursion_sheet)
-    excursion.duration = parse_duration(excursion_sheet)
-    start_point = parse_start_point(excursion_sheet)
-    if start_point is not None:
-        excursion.picking_place = Models.PickingPlace.get_place_id(start_point)
-    else:
-        excursion.picking_place = None
-    excursion.save()
 
-    parse_schedules(excursion_sheet, excursion.id)
-    parse_sight(excursion_sheet, excursion.id)
-    parse_excursion_property(excursion_sheet, excursion.id)
-    return excursion
+def parse_excursion(excursion_sheet):
+    parse_excursion_images(excursion_sheet=excursion_sheet, folder="new/")
+
+    # excursion = Models.Excursion()
+    # excursion.price = Models.Price.get_price_id(*parse_price(excursion_sheet))
+    # excursion.name = parse_title(excursion_sheet)
+    # excursion.description = parse_description(excursion_sheet)
+    # excursion.duration = parse_duration(excursion_sheet)
+    # start_point = parse_start_point(excursion_sheet)
+    # if start_point is not None:
+    #     excursion.picking_place = Models.PickingPlace.get_place_id(start_point)
+    # else:
+    #     excursion.picking_place = None
+    # excursion.save()
+    #
+    # parse_schedules(excursion_sheet, excursion.id)
+    # parse_sight(excursion_sheet, excursion.id)
+    # parse_excursion_property(excursion_sheet, excursion.id)
+    # return excursion
 
 
 def parse_schedules(excursion_sheet, excursion_id):
@@ -145,6 +156,71 @@ def parse_duration(excursion_sheet):
         if item[0][:7] == 'Вариант' and item[7] != '':
             dur = [int(x) for x in item[7].split(':')]
             return 60 * dur[0] + dur[1]
+
+
+def parse_excursion_images(excursion_sheet, folder):
+    images = []
+    for item in excursion_sheet:
+        if item[0][:8] == 'Картинка' and item[1] != '':
+            print("Нашел картинку")
+            url = item[1]
+            filename = _parse(get_html(url), folder)
+            download_file_from_google_drive(url, filename)
+            images.append(filename)
+    return json.dumps(images)
+
+
+def get_html(url):
+    context = ssl._create_unverified_context()
+    response = urllib.request.urlopen(url, context=context)
+    return response.read()
+
+
+def _parse(url, folder=""):
+    current_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "media")
+    new_directory = os.path.join(current_directory, folder)
+    if not os.path.exists(new_directory):
+        os.makedirs(new_directory)
+
+    soup = BeautifulSoup(url, 'html.parser')
+    filename = soup.findAll('title')[0].string
+    filename = os.path.splitext(filename)[0]+os.path.splitext(filename)[1].split(" ")[0]
+    destination = os.path.join(new_directory, filename)
+    print(destination)
+    return destination
+
+
+def download_file_from_google_drive(url, destination):
+    URL = re.sub(r"https://drive\.google\.com/file/d/(.*?)/.*?\?usp=sharing",
+                 r"https://drive.google.com/uc?export=download&id=\1", url)
+
+    session = requests.Session()
+
+    response = session.get(URL, stream=True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = {'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    save_response_content(response, destination)
+
+
+def get_confirm_token(response):
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            return value
+
+    return None
+
+
+def save_response_content(response, destination):
+    CHUNK_SIZE = 32768
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(CHUNK_SIZE):
+            if chunk:  # filter out keep-alive new chunks
+                f.write(chunk)
 
 
 def parse(link=DEFAULT_LINK):
