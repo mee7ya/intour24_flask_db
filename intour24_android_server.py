@@ -104,7 +104,6 @@ def date_start_end(date):
     from_date = utc.localize(from_date).astimezone(timezoneLocal)
     to_date = utc.localize(to_date).astimezone(timezoneLocal)
 
-    print(from_date, to_date)
     return from_date, to_date
 
 
@@ -476,7 +475,7 @@ def groups(date, sight_id):
     groups = []
     for excursion in excursions:
         groups_data = db2.session.query(Group).filter(
-            Group.id == excursion.id,
+            Group.excursion_id == excursion.id,
             Group.tour_date > date_start,
             Group.tour_date <= date_end
         ).group_by(Group.id)
@@ -862,13 +861,13 @@ db = intour24_database.Database()
 db2 = SQLAlchemy(app)
 #db.connect(db_name="intour24", host="188.130.155.89", login="intour24_admin", password="R9i477o#W7cv")
 
-import logging
-logging.basicConfig()
-sqllogger = logging.getLogger('sqlalchemy.engine')
-sqllogger.setLevel(logging.DEBUG)
-fh = logging.FileHandler('sql.log')
-fh.setLevel(logging.DEBUG)
-sqllogger.addHandler(fh)
+# import logging
+# logging.basicConfig()
+# sqllogger = logging.getLogger('sqlalchemy.engine')
+# sqllogger.setLevel(logging.DEBUG)
+# fh = logging.FileHandler('sql.log')
+# fh.setLevel(logging.DEBUG)
+# sqllogger.addHandler(fh)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
