@@ -266,7 +266,7 @@ def sight_in_json_short(sight):
             'geoposition': sight.geoposition,
             'images': sight.images,
             'description': sight.description,
-            'cover': MEDIA_ROOT+sight.cover}
+            'cover': MEDIA_ROOT+str(sight.cover)}
 
 
 def guide_in_json(guide):
@@ -466,12 +466,11 @@ def groups(date, sight_id):
     if date_code != -1:
         return send_400_with_error(date_code)
     date_start, date_end = date_start_end(date)
-    sight = db2.session.query(Sight).filter_by(id=sight_id).first()
+    sight = db2.session.query(Sight).get(sight_id)
     excursions = db2.session.query(Excursion).\
         outerjoin(ExcursionsSight, ExcursionsSight.sight_id == sight.id).\
         filter(ExcursionsSight.excursion_id == Excursion.id).\
-        group_by(Excursion.id).\
-        all()
+        group_by(Excursion.id)
     groups = []
     for excursion in excursions:
         groups_data = db2.session.query(Group).filter(
