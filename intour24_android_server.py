@@ -252,7 +252,7 @@ def sight_in_json_short(sight):
             'geoposition': sight.geoposition,
             'images': sight.images,
             'description': sight.description,
-            'cover': MEDIA_ROOT+sight.cover}
+            'cover': MEDIA_ROOT+str(sight.cover)}
 
 
 def guide_in_json(guide):
@@ -452,15 +452,14 @@ def groups(date, sight_id):
     if date_code != -1:
         return send_400_with_error(date_code)
     date_start, date_end = date_start_end(date)
-    sight = db2.session.query(Sight).filter_by(id=sight_id).first()
+    sight = db2.session.query(Sight).get(sight_id)
     excursions = db2.session.query(Excursion).\
         outerjoin(ExcursionsSight, ExcursionsSight.sight_id == sight.id).\
         filter(ExcursionsSight.excursion_id == Excursion.id).\
-        group_by(Excursion.id).\
-        all()
+        group_by(Excursion.id)
     groups = []
     for excursion in excursions:
-        groups_data = db2.session.query(Group).filter((excursion.id == Group.id) & (Group.tour_date > date_start) &
+        groups_data = db2.session.query(Group).filter((excursion.id == Group.excursion_id) & (Group.tour_date > date_start) &
                                                       (Group.tour_date < date_end)).\
             group_by(Group.id)
         groups.extend(groups_data)
@@ -845,9 +844,9 @@ db = intour24_database.Database()
 db2 = SQLAlchemy(app)
 #db.connect(db_name="intour24", host="188.130.155.89", login="intour24_admin", password="R9i477o#W7cv")
 
-import logging
-logging.basicConfig()
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+# import logging
+# logging.basicConfig()
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
