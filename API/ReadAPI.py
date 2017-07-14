@@ -24,45 +24,60 @@ pp = pprint.PrettyPrinter()
 DEFAULT_LINK = 'https://docs.google.com/spreadsheets/d/1KS0ZMaNtgTeH73mxMd5NXNZYKanOnmij9cNlsPfrlIw'
 
 
-def parse_excursion(excursion_sheet):
-    parse_excursion_images(excursion_sheet=excursion_sheet, folder="new/")
+def parse_excursion(excursion_sheet, operator_name):
+    # parse_excursion_images(excursion_sheet=excursion_sheet, folder="new/")
 
-    # excursion = Models.Excursion()
-    # excursion.price = Models.Price.get_price_id(*parse_price(excursion_sheet))
-    # excursion.name = parse_title(excursion_sheet)
-    # excursion.description = parse_description(excursion_sheet)
-    # excursion.duration = parse_duration(excursion_sheet)
-    # start_point = parse_start_point(excursion_sheet)
-    # if start_point is not None:
-    #     excursion.picking_place = Models.PickingPlace.get_place_id(start_point)
-    # else:
-    #     excursion.picking_place = None
-    # excursion.save()
-    #
-    # parse_schedules(excursion_sheet, excursion.id)
-    # parse_sight(excursion_sheet, excursion.id)
-    # parse_excursion_property(excursion_sheet, excursion.id)
-    # return excursion
+    excursion = Models.Excursion()
+    excursion.price = Models.Price.get_price_id(*parse_price(excursion_sheet))
+    excursion.name = parse_title(excursion_sheet)
+    excursion.description = parse_description(excursion_sheet)
+    excursion.duration = parse_duration(excursion_sheet)
+    excursion.category = parse_category(excursion_sheet)
+    excursion.operator = parse_operator(operator_name)
+    start_point = parse_start_point(excursion_sheet)
+    if start_point is not None:
+        excursion.picking_place = Models.PickingPlace.get_place_id(start_point)
+    else:
+        excursion.picking_place = None
+    excursion.save()
 
+    parse_schedules(excursion_sheet, excursion.id)
+    parse_sight(excursion_sheet, excursion.id)
+    parse_excursion_property(excursion_sheet, excursion.id)
+    return excursion
+
+
+def fix_date(date):
+    t = date.split('.')
+    return "{}.{}.{}".format(t[0], t[1], "20"+t[2][-2:])
 
 def parse_schedules(excursion_sheet, excursion_id):
     for item in excursion_sheet:
         if item[0][:7] == 'Вариант' and item[3] != '':
-            schedule = Models.Schedule()
+            start_date = fix_date(item[1])
+            end_date = fix_date(item[2])
+            start_time = item[5]
 
-            schedule.start_date = datetime.strptime(item[1], DATE_FORMAT).strftime(DATE_DB_FORMAT)
-            schedule.start_time = datetime.strptime(item[5], TIME_FORMAT).strftime(TIME_DB_FORMAT)
+            schedule = Models.Schedule()
+            schedule.start_date = datetime.strptime(start_date, DATE_FORMAT).strftime(DATE_DB_FORMAT)
+            schedule.start_time = datetime.strptime(start_time, TIME_FORMAT).strftime(TIME_DB_FORMAT)
             if item[3] != 'Единожды' and item[3] != "Ежемесячно":
-                schedule.end_date = datetime.strptime(item[2], DATE_FORMAT).strftime(DATE_DB_FORMAT)
+                schedule.end_date = datetime.strptime(end_date, DATE_FORMAT).strftime(DATE_DB_FORMAT)
                 schedule.everyday, schedule.weekday, schedule.odd_even_week \
                     = parse_repeat_intervals(item[3], item[4])
             elif item[3] == "Ежемесячно":
-                schedule.end_date = datetime.strptime(item[2], DATE_FORMAT).strftime(DATE_DB_FORMAT)
-                schedule.repeat_day = datetime.strptime(item[1], DATE_FORMAT).day
+                schedule.end_date = datetime.strptime(end_date, DATE_FORMAT).strftime(DATE_DB_FORMAT)
+                schedule.repeat_day = datetime.strptime(start_date, DATE_FORMAT).day
             elif item[3] == 'Единожды':
                 schedule.end_date = schedule.start_date
             schedule.excursion = excursion_id
             schedule.save()
+
+
+def parse_operator(name):
+    operator = Models.Operator()
+    operator.name = name
+    return operator.save()
 
 
 def parse_price(excursion_sheet):
@@ -75,6 +90,14 @@ def parse_price(excursion_sheet):
             children = round(float(item[1].replace(",", ".")))
             price.append(children)
     return price
+
+
+def parse_category(excursion_sheet):
+    for item in excursion_sheet:
+        if item[0] == "Тип":
+            category = Models.Category()
+            category.name = item[1]
+            return category.save()
 
 
 def parse_title(excursion_sheet):
@@ -91,7 +114,7 @@ def parse_description(excursion_sheet):
 
 def parse_start_point(excursion_sheet):
     for item in excursion_sheet:
-        if item[0] == "Адрес встречи":
+        if item[0].strip() == "Адрес сбора группы":
             return item[1]
 
 
@@ -223,7 +246,7 @@ def save_response_content(response, destination):
                 f.write(chunk)
 
 
-def parse(link=DEFAULT_LINK):
+def parse(operator_name, link=DEFAULT_LINK):
     if DEFAULT_LINK != link:
         link = link if link else DEFAULT_LINK
         print("Ссылка: '%s'" % link)
@@ -237,7 +260,7 @@ def parse(link=DEFAULT_LINK):
                     print("На очереди: '%s'" % sheet.title)
                     ans = input('Парсим (y/n/e)? ')
                     if ans.strip()[0].lower() == "y":
-                        parse_excursion(excursion_sheet)
+                        parse_excursion(excursion_sheet, operator_name)
                         print("Закончили парсить '%s'" % sheet.title)
                         parsed += 1
                     elif ans.strip()[0].lower() == "e":
@@ -257,6 +280,7 @@ if __name__ == '__main__':
     while True:
         try:
             input_link = input('Вставь ссылку на таблицу: ')
-            parse(input_link.strip())
+            operator_name = input('Название туроператора: ')
+            parse(operator_name.strip(), input_link.strip())
         except KeyboardInterrupt:
             print("Вы отменили парсинг")
