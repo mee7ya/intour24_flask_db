@@ -13,7 +13,7 @@ MEDIA_ROOT="https://intour24.ru/media/"
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 app.config['JSON_AS_ASCII'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://intour24_admin:R9i477o#W7cv@188.130.155.89/intour24_test"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://intour24_admin:R9i477o#W7cv@188.130.155.89/intour24_production"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 SMS_URL = 'https://sms.ru/sms/'
 SMS_API = '1F5F1DF2-3C6B-D268-A754-75F38D147E70'
@@ -150,7 +150,7 @@ def operator_in_json(operator):
                 'name': operator.name,
                 'phone': operator.phone,
                 'address': operator.address,
-                'logo': operator.logo,
+                'logo': MEDIA_ROOT + str(operator.logo),
                 'accreditation': operator.accreditation,
                 'email': operator.email}
     else:
@@ -170,6 +170,7 @@ def excursion_in_json_full(excursion, properties):
                 'operator': operator_in_json(excursion.operator),
                 'linkToSite': excursion.link_to_site,
                 'images': excursion.images,
+                'cover': MEDIA_ROOT + str(excursion.cover),
                 'price': price_in_json(excursion.price),
                 'properties': excursion_properties_in_json(properties)}
     else:
@@ -195,6 +196,7 @@ def excursion_in_json_full_with_properties_pars(excursion):
                 'operator': operator_in_json(excursion.operator),
                 'linkToSite': excursion.link_to_site,
                 'images': excursion.images,
+                'cover': MEDIA_ROOT + str(excursion.cover),
                 'price': price_in_json(excursion.price),
                 'properties': excursion_properties_in_json(properties)}
     else:
@@ -222,6 +224,7 @@ def excursions_in_json(excursions):
                     'operatorId': excursion.operator_id,
                     'linkToSite': excursion.link_to_site,
                     'images': excursion.images,
+                    'cover': MEDIA_ROOT + str(excursion.cover),
                     'priceId': excursion.price_id})
     return rez
 
@@ -247,7 +250,7 @@ def sight_in_json_full(sight, properties):
             'geoposition': sight.geoposition,
             'images': sight.images,
             'description': sight.description,
-            'cover': MEDIA_ROOT+sight.cover,
+            'cover': MEDIA_ROOT+str(sight.cover),
             'properties': sight_properties_in_json(properties)}
 
 
@@ -869,4 +872,4 @@ db2 = SQLAlchemy(app)
 # sqllogger.addHandler(fh)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', debug=True)

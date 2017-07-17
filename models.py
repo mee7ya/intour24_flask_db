@@ -183,6 +183,7 @@ class Excursion(db.Model):
     link_to_site = db.Column(db.String)
     images = db.Column(db.ARRAY(db.VARCHAR()))
     price_id = db.Column(db.ForeignKey('prices.id'))
+    cover = db.Column(db.String)
 
     category = db.relationship('Category', primaryjoin='Excursion.category_id == Category.id', backref='excursions')
     operator = db.relationship('Operator', primaryjoin='Excursion.operator_id == Operator.id', backref='excursions')
