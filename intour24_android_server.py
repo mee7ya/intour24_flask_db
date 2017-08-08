@@ -8,7 +8,8 @@ import os
 from models import *
 from flask_sqlalchemy import SQLAlchemy
 
-MEDIA_ROOT="https://intour24.ru/media/"
+ROOT = "https://intour24.ru/"
+MEDIA_ROOT = ROOT + "media/"
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
@@ -169,7 +170,7 @@ def excursion_in_json_full(excursion, properties):
                 'pickingPlace': picking_place_in_json(excursion.picking_place),
                 'operator': operator_in_json(excursion.operator),
                 'linkToSite': excursion.link_to_site,
-                'images': excursion.images,
+                'images': [MEDIA_ROOT + s for s in excursion.images],
                 'cover': MEDIA_ROOT + str(excursion.cover),
                 'price': price_in_json(excursion.price),
                 'properties': excursion_properties_in_json(properties)}
@@ -195,7 +196,7 @@ def excursion_in_json_full_with_properties_pars(excursion):
                 'pickingPlace': picking_place_in_json(excursion.picking_place),
                 'operator': operator_in_json(excursion.operator),
                 'linkToSite': excursion.link_to_site,
-                'images': excursion.images,
+                'images': [MEDIA_ROOT + s for s in excursion.images],
                 'cover': MEDIA_ROOT + str(excursion.cover),
                 'price': price_in_json(excursion.price),
                 'properties': excursion_properties_in_json(properties)}
@@ -223,7 +224,7 @@ def excursions_in_json(excursions):
                     'startPlaceId': excursion.picking_place_id,
                     'operatorId': excursion.operator_id,
                     'linkToSite': excursion.link_to_site,
-                    'images': excursion.images,
+                    'images': [MEDIA_ROOT + s for s in excursion.images],
                     'cover': MEDIA_ROOT + str(excursion.cover),
                     'priceId': excursion.price_id})
     return rez
@@ -248,7 +249,7 @@ def sight_in_json_full(sight, properties):
     return {'id': sight.id,
             'name': sight.name,
             'geoposition': sight.geoposition,
-            'images': sight.images,
+            'images': [MEDIA_ROOT + s for s in sight.images],
             'description': sight.description,
             'cover': MEDIA_ROOT+str(sight.cover),
             'properties': sight_properties_in_json(properties)}
@@ -267,7 +268,7 @@ def sight_in_json_short(sight):
     return {'id': sight.id,
             'name': sight.name,
             'geoposition': sight.geoposition,
-            'images': sight.images,
+            'images': [MEDIA_ROOT + s for s in sight.images],
             'description': sight.description,
             'cover': MEDIA_ROOT+str(sight.cover)}
 
