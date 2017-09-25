@@ -62,14 +62,14 @@ class Excursion(BaseModel):
 
 
 class Schedule(BaseModel):
-    start_date = CharField(null=True)
     excursion = ForeignKeyField(Excursion, null=True)
-    end_date = CharField(null=True)
-    repeat_interval = CharField(null=True)
-    repeat_day = CharField(null=True)
-    repeat_month = CharField(null=True)
-    repeat_week = CharField(null=True)
-    repeat_weekday = CharField(null=True)
+    start_date = DateField(null=True)
+    end_date = DateField(null=True)
+    start_time = TimeField(null=True)
+    everyday = IntegerField(null=True)
+    weekday = IntegerField(null=True)
+    odd_even_week = IntegerField(null=True)
+    repeat_day = IntegerField(null=True)
 
 
 def migrate():

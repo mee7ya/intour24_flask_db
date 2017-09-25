@@ -1,50 +1,84 @@
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
+
 import pprint
-import local_db as db
+import ssl
+import urllib.request
 from datetime import *
+
+import json
+import gspread
+import re
+import requests
+from oauth2client.service_account import ServiceAccountCredentials
+from bs4 import BeautifulSoup
+
 from settings import *
 
 scope = ['https://spreadsheets.google.com/feeds']
 creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
 client = gspread.authorize(creds)
 
-sheet = client.open('Tour info').worksheet('Свияжск и Раифа')
-
 pp = pprint.PrettyPrinter()
 
+DEFAULT_LINK = 'https://docs.google.com/spreadsheets/d/1KS0ZMaNtgTeH73mxMd5NXNZYKanOnmij9cNlsPfrlIw'
 
-def parse_excursion(_sheet):
-    excursion_sheet = _sheet.get_all_values()
+
+def parse_excursion(excursion_sheet, operator_name):
+    # parse_excursion_images(excursion_sheet=excursion_sheet, folder="new/")
+
     excursion = Models.Excursion()
-    excursion.price_id = Models.Price.get_price_id(*parse_price(excursion_sheet))
+    excursion.price = Models.Price.get_price_id(*parse_price(excursion_sheet))
     excursion.name = parse_title(excursion_sheet)
     excursion.description = parse_description(excursion_sheet)
     excursion.duration = parse_duration(excursion_sheet)
+    excursion.category = parse_category(excursion_sheet)
+    excursion.operator = parse_operator(operator_name)
     start_point = parse_start_point(excursion_sheet)
     if start_point is not None:
-        excursion.start_point = Models.PickingPlace.get_place_id(start_point)
+        excursion.picking_place = Models.PickingPlace.get_place_id(start_point)
     else:
-        excursion.start_point = None
+        excursion.picking_place = None
     excursion.save()
 
     parse_schedules(excursion_sheet, excursion.id)
-    parse_sight(excursion_sheet)
-    parse_excursion_property(excursion_sheet)
+    parse_sight(excursion_sheet, excursion.id)
+    parse_excursion_property(excursion_sheet, excursion.id)
     return excursion
+
+
+def fix_date(date):
+    t = date.split('.')
+    return "{}.{}.{}".format(t[0], t[1], "20"+t[2][-2:])
 
 
 def parse_schedules(excursion_sheet, excursion_id):
     for item in excursion_sheet:
         if item[0][:7] == 'Вариант' and item[3] != '':
-            schedule = Models.Schedule()
+            start_date = fix_date(item[1])
+            end_date = fix_date(item[2])
+            start_time = item[5]
 
-            schedule.start_date = datetime.strptime(item[1], DATE_FORMAT).strftime(DATE_TZ_FORMAT)
-            schedule.end_date = datetime.strptime(item[2], DATE_FORMAT).strftime(DATE_TZ_FORMAT)
-            schedule.repeat_day, schedule.repeat_week, schedule.repeat_weekday, schedule.repeat_month \
-                = parse_repeat_intervals(item[3], item[4])
+            schedule = Models.Schedule()
+            schedule.start_date = datetime.strptime(start_date, DATE_FORMAT).strftime(DATE_DB_FORMAT)
+            schedule.start_time = datetime.strptime(start_time, TIME_FORMAT).strftime(TIME_DB_FORMAT)
+            if item[3] != 'Единожды' and item[3] != "Ежемесячно":
+                schedule.end_date = datetime.strptime(end_date, DATE_FORMAT).strftime(DATE_DB_FORMAT)
+                schedule.everyday, schedule.weekday, schedule.odd_even_week \
+                    = parse_repeat_intervals(item[3], item[4])
+            elif item[3] == "Ежемесячно":
+                schedule.end_date = datetime.strptime(end_date, DATE_FORMAT).strftime(DATE_DB_FORMAT)
+                schedule.repeat_day = datetime.strptime(start_date, DATE_FORMAT).day
+            elif item[3] == 'Единожды':
+                schedule.end_date = schedule.start_date
             schedule.excursion = excursion_id
             schedule.save()
+
+
+def parse_operator(name):
+    operator = Models.Operator()
+    operator.name = name
+    return operator.save()
 
 
 def parse_price(excursion_sheet):
@@ -57,6 +91,14 @@ def parse_price(excursion_sheet):
             children = round(float(item[1].replace(",", ".")))
             price.append(children)
     return price
+
+
+def parse_category(excursion_sheet):
+    for item in excursion_sheet:
+        if item[0] == "Тип":
+            category = Models.Category()
+            category.name = item[1]
+            return category.save()
 
 
 def parse_title(excursion_sheet):
@@ -73,48 +115,64 @@ def parse_description(excursion_sheet):
 
 def parse_start_point(excursion_sheet):
     for item in excursion_sheet:
-        if item[0] == "Адрес встречи":
+        if item[0].strip() == "Адрес сбора группы":
             return item[1]
 
 
 def parse_repeat_intervals(regularity, day_of_week):
-    repeat_weekday = '0'
-    repeat_day = '0'
-    repeat_week = '0'
-    repeat_month = '0'
+    everyday = None
+    weekday = None
+    odd_even_week = None
+    days = {
+        'Понедельник': '1',
+        'Вторник': '2',
+        'Среда': '3',
+        'Четверг': '4',
+        'Пятница': '5',
+        'Суббота': '6',
+        'Воскресенье': '7'
+    }
 
     if regularity == 'Ежедневно':
-        repeat_day = '1'
+        everyday = '1'
     elif regularity == 'Еженедельно':
-        days = {'Суббота': '5', 'Понедельник': '0',
-                'Воскресенье': '6', 'Вторник': '1', 'Среда': '2',
-                'Четверг': '3', 'Пятница': '4'}
-        repeat_week = '1'
-        repeat_weekday = days[day_of_week]
-    elif regularity == 'Через неделю':
-        repeat_week = '1'
-    elif regularity == 'Ежемесячно':
-        repeat_month = '1'
+        weekday = days[day_of_week]
+    elif regularity == 'Нечетная неделя':
+        odd_even_week = "1"
+        weekday = days[day_of_week]
+    elif regularity == 'Четная неделя':
+        odd_even_week = "2"
+        weekday = days[day_of_week]
 
-    return repeat_day, repeat_week, repeat_weekday, repeat_month
+    return everyday, weekday, odd_even_week
 
 
-def parse_sight(excursion_sheet):
+def parse_sight(excursion_sheet, excursion_id):
     for item in excursion_sheet:
-        if item[0][:5] == 'Пункт':
+        if item[0][:5] == 'Пункт' and item[1] != '':
             sight = Models.Sight()
             sight.name = item[1]
             sight.image = ''
             sight.save()
 
+            excursion_sight = Models.ExcursionSight()
+            excursion_sight.excursion = excursion_id
+            excursion_sight.sight = sight.id
+            excursion_sight.save()
 
-def parse_excursion_property(excursion_sheet):
+
+def parse_excursion_property(excursion_sheet, excursion_id):
     for item in excursion_sheet:
         if item[0][:1] == '№' and item[1] != '':
             excursionpr = Models.ExcursionProperty()
             excursionpr.name = item[1]
             excursionpr.image = ''
             excursionpr.save()
+
+            excursion_excursionpr = Models.ExcursionExcursionProperty()
+            excursion_excursionpr.excursion = excursion_id
+            excursion_excursionpr.property = excursionpr.id
+            excursion_excursionpr.save()
 
 
 def parse_duration(excursion_sheet):
@@ -124,10 +182,106 @@ def parse_duration(excursion_sheet):
             return 60 * dur[0] + dur[1]
 
 
-def parse():
-    return parse_excursion(sheet)
+def parse_excursion_images(excursion_sheet, folder):
+    images = []
+    for item in excursion_sheet:
+        if item[0][:8] == 'Картинка' and item[1] != '':
+            print("Нашел картинку")
+            url = item[1]
+            filename = _parse(get_html(url), folder)
+            download_file_from_google_drive(url, filename)
+            images.append(filename)
+    return json.dumps(images)
+
+
+def get_html(url):
+    context = ssl._create_unverified_context()
+    response = urllib.request.urlopen(url, context=context)
+    return response.read()
+
+
+def _parse(url, folder=""):
+    current_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "media")
+    new_directory = os.path.join(current_directory, folder)
+    if not os.path.exists(new_directory):
+        os.makedirs(new_directory)
+
+    soup = BeautifulSoup(url, 'html.parser')
+    filename = soup.findAll('title')[0].string
+    filename = os.path.splitext(filename)[0]+os.path.splitext(filename)[1].split(" ")[0]
+    destination = os.path.join(new_directory, filename)
+    print(destination)
+    return destination
+
+
+def download_file_from_google_drive(url, destination):
+    URL = re.sub(r"https://drive\.google\.com/file/d/(.*?)/.*?\?usp=sharing",
+                 r"https://drive.google.com/uc?export=download&id=\1", url)
+
+    session = requests.Session()
+
+    response = session.get(URL, stream=True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = {'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    save_response_content(response, destination)
+
+
+def get_confirm_token(response):
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            return value
+
+    return None
+
+
+def save_response_content(response, destination):
+    CHUNK_SIZE = 32768
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(CHUNK_SIZE):
+            if chunk:  # filter out keep-alive new chunks
+                f.write(chunk)
+
+
+def parse(operator_name, link=DEFAULT_LINK):
+    if DEFAULT_LINK != link:
+        link = link if link else DEFAULT_LINK
+        print("Ссылка: '%s'" % link)
+        ans = input('Начинаем парсить (y/n)? ')
+        if ans.strip()[0].lower() == "y":
+            sheets = client.open_by_url(link).worksheets()
+            parsed = 0
+            for sheet in sheets:
+                excursion_sheet = sheet.get_all_values()
+                if excursion_sheet[0][0] == "Экскурсия":
+                    print("На очереди: '%s'" % sheet.title)
+                    ans = input('Парсим (y/n/e)? ')
+                    if ans.strip()[0].lower() == "y":
+                        parse_excursion(excursion_sheet, operator_name)
+                        print("Закончили парсить '%s'" % sheet.title)
+                        parsed += 1
+                    elif ans.strip()[0].lower() == "e":
+                        print("Вы отменили парсинг")
+                        exit()
+                    else:
+                        print("Пропущена \n")
+                        pass
+            print("Всего импортировано экскурсий: %s" % parsed)
+            exit()
+        else:
+            print("Вы отменили парсинг")
+            exit()
 
 
 if __name__ == '__main__':
-    db.migrate()
-    parse()
+    while True:
+        try:
+            input_link = input('Вставь ссылку на таблицу: ')
+            operator_name = input('Название туроператора: ')
+            parse(operator_name.strip(), input_link.strip())
+        except KeyboardInterrupt:
+            print("Вы отменили парсинг")
