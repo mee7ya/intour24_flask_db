@@ -13,7 +13,7 @@ import requests
 from oauth2client.service_account import ServiceAccountCredentials
 from bs4 import BeautifulSoup
 
-from API.settings import *
+from settings import *
 
 scope = ['https://spreadsheets.google.com/feeds']
 creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
@@ -50,6 +50,7 @@ def parse_excursion(excursion_sheet, operator_name):
 def fix_date(date):
     t = date.split('.')
     return "{}.{}.{}".format(t[0], t[1], "20"+t[2][-2:])
+
 
 def parse_schedules(excursion_sheet, excursion_id):
     for item in excursion_sheet:

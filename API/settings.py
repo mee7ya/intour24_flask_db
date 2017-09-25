@@ -1,5 +1,5 @@
-import local_db as LocalModels
-import API.postgre_connect as PostgreModels
+# import local_db as LocalModels
+import postgre_connect as PostgreModels
 import os
 import pytz
 
