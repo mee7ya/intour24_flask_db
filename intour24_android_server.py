@@ -411,10 +411,10 @@ def sights():
     sights = Sight.query.order_by(Sight.id).all()
     json_response = []
     for sight in sights:
-        min_price, max_price = sight_min_max_price(sight)
+        # min_price, max_price = sight_min_max_price(sight)
         json_sight = sight_in_json_short(sight)
-        json_sight['minPrice'] = min_price
-        json_sight['maxPrice'] = max_price
+        json_sight['minPrice'] = 0
+        json_sight['maxPrice'] = 0
         json_response.append(json_sight)
     json_response = json.dumps(json_response)
     response = Response(json_response, content_type='application/json; charset=utf-8')
